@@ -925,7 +925,7 @@ export default function Attendance() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className={`space-y-1 transition-all duration-300 ${(!isEditing || formData.status === 'absent' || formData.status === 'leave') ? 'opacity-40 blur-[1px] grayscale-[0.5]' : ''}`}>
+              <div className={`space-y-1 transition-all duration-300 ${(formData.status === 'absent' || formData.status === 'leave') ? 'opacity-50' : ''}`}>
                 <div className="flex justify-between items-center px-0.5">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Check In</label>
                   {formData.checkInTime && <span className="text-[9px] font-black text-blue-500">{convertTo12Hour(formData.checkInTime)}</span>}
@@ -938,7 +938,7 @@ export default function Attendance() {
                   onChange={e => setFormData({ ...formData, checkInTime: e.target.value })}
                 />
               </div>
-              <div className={`space-y-1 transition-all duration-300 ${(!isEditing || formData.status === 'absent' || formData.status === 'leave') ? 'opacity-40 blur-[1px] grayscale-[0.5]' : ''}`}>
+              <div className={`space-y-1 transition-all duration-300 ${(formData.status === 'absent' || formData.status === 'leave') ? 'opacity-50' : ''}`}>
                 <div className="flex justify-between items-center px-0.5">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Check Out</label>
                   {formData.checkOutTime && <span className="text-[9px] font-black text-blue-500">{convertTo12Hour(formData.checkOutTime)}</span>}

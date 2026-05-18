@@ -426,7 +426,11 @@ const WFHRequests = () => {
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       <p className="text-[10px] font-bold text-indigo-600 uppercase mb-1">Check-Out</p>
                       <p className="text-sm font-black text-slate-800">
-                        {monitoringData.checkOut ? moment(monitoringData.checkOut).format("hh:mm A") : "Ongoing"}
+                        {monitoringData.checkOut 
+                          ? moment(monitoringData.checkOut).format("hh:mm A") 
+                          : (moment(monitoringData.date).startOf('day').isBefore(moment().startOf('day')) 
+                            ? "Day Completed" 
+                            : "Ongoing")}
                       </p>
                     </div>
                   </div>
@@ -452,10 +456,20 @@ const WFHRequests = () => {
                     <div className="flex justify-between items-end mb-3">
                       <div>
                         <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Activity Analysis</p>
-                        <div className="flex gap-3">
-                          <span className="text-[10px] font-bold text-blue-600">Active: {Math.round((monitoringData.activeSeconds || 0) / 60)}m</span>
-                          <span className="text-[10px] font-bold text-amber-600">Idle: {Math.round((monitoringData.idleSeconds || 0) / 60)}m</span>
-                        </div>
+                        {(() => {
+                          const startTime = moment(monitoringData.checkIn);
+                          const endTime = monitoringData.checkOut ? moment(monitoringData.checkOut) : moment();
+                          const totalSecs = Math.max(0, endTime.diff(startTime, 'seconds'));
+                          const activeSecs = monitoringData.activeSeconds || 0;
+                          const idleSecs = Math.max(0, totalSecs - activeSecs);
+                          
+                          return (
+                            <div className="flex gap-3">
+                              <span className="text-[10px] font-bold text-blue-600">Active: {Math.floor(activeSecs / 60)}m</span>
+                              <span className="text-[10px] font-bold text-amber-600">Other Tab: {Math.floor(idleSecs / 60)}m</span>
+                            </div>
+                          );
+                        })()}
                       </div>
                       <p className="text-[10px] font-black text-slate-400">
                         {Math.round(((monitoringData.activeSeconds || 0) / ((monitoringData.activeSeconds || 1) + (monitoringData.idleSeconds || 0))) * 100)}% Productive

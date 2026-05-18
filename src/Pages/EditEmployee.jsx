@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { X, Camera, Upload, ChevronDown, Eye, EyeOff, Save, Info, Briefcase, MapPin, Lock, CreditCard, Paperclip, Monitor, Laptop } from 'lucide-react';
+import { X, Camera, Upload, ChevronDown, Eye, EyeOff, Save, Info, Briefcase, MapPin, Lock, CreditCard, Paperclip, Monitor, Laptop, Plus } from 'lucide-react';
 import { getFullUrl } from '../utils/urlHelper';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -44,15 +44,28 @@ export default function EditEmployee() {
 
   // Form State
   const [formData, setFormData] = useState({
-    firstName: '', middleName: '', lastName: '',
-    email: '', contactNumber: '+91', gender: '', dateOfBirth: '',
-    employeeId: '', designation: '', department: '',
-    reportingManager: '', employmentType: 'Full Time', dateOfJoining: '',
-    workLocation: 'Office', companyId: '', addressLine: '', city: '',
-    pincode: '', officeEmail: '',
-    temporaryPassword: '', roleLevel: 'Employee', basicSalary: '',
-    accountNumber: '', bankName: '', ifscCode: ''
+    designation: '',
+    department: '',
+    reportingManager: [],
+    employmentType: 'Full Time',
+    dateOfJoining: '',
+    workLocation: 'Office',
+    companyId: '',
+    addressLine: '',
+    city: '',
+    pincode: '',
+    officeEmail: '',
+    roleLevel: 'Employee',
+    basicSalary: '',
+    salaryRemark: '',
+    salaryDate: new Date().toISOString().split('T')[0],
+    accountNumber: '',
+    bankName: '',
+    ifscCode: ''
   });
+
+  const [initialSalary, setInitialSalary] = useState('');
+  const [salaryHistory, setSalaryHistory] = useState([]);
 
   const [selectedAssets, setSelectedAssets] = useState([]);
   const [profilePhoto, setProfilePhoto] = useState(null);
@@ -94,7 +107,7 @@ export default function EditEmployee() {
             employeeId: emp.employeeId || "",
             designation: emp.designation || "",
             department: emp.department?._id?.toString() || (typeof emp.department === 'string' ? emp.department : '') || "",
-            reportingManager: emp.manager?._id?.toString() || (typeof emp.manager === 'string' ? emp.manager : '') || "",
+            reportingManager: Array.isArray(emp.managers) ? emp.managers.map(m => m._id || m) : (emp.manager ? [emp.manager._id || emp.manager] : []),
             employmentType: emp.employmentType || "Full Time",
             dateOfJoining: emp.joiningDate ? emp.joiningDate.split("T")[0] : "",
             workLocation: emp.workLocation || "Office",
@@ -121,6 +134,8 @@ export default function EditEmployee() {
             resume: emp.resume ? getFullUrl(emp.resume, API_BASE_URL) : null
           });
 
+          setInitialSalary(emp.salary || "");
+          setSalaryHistory(emp.salaryHistory || []);
           setSelectedAssets(emp.assets?.map(a => a._id || a) || []);
 
           // Trigger chained fetches if company exists
@@ -166,7 +181,7 @@ export default function EditEmployee() {
 
   const handleCompanyChange = async (e) => {
     const compId = e.target.value;
-    setFormData(prev => ({ ...prev, companyId: compId, department: '', reportingManager: '' }));
+    setFormData(prev => ({ ...prev, companyId: compId, department: '', reportingManager: [] }));
     setDepartments([]);
     setManagers([]);
     setAvailableAssets([]);
@@ -179,6 +194,16 @@ export default function EditEmployee() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleManagerToggle = (managerId) => {
+    setFormData(prev => {
+      const current = prev.reportingManager || [];
+      const updated = current.includes(managerId)
+        ? current.filter(id => id !== managerId)
+        : [...current, managerId];
+      return { ...prev, reportingManager: updated };
+    });
   };
 
   const toggleAsset = (assetId) => {
@@ -214,7 +239,9 @@ export default function EditEmployee() {
       // ── ObjectId fields: only send when a real value is selected ──
       // Sending "" for an ObjectId causes BSONError on production Mongoose
       if (formData.department)       fData.append("department", formData.department);
-      if (formData.reportingManager) fData.append("manager", formData.reportingManager);
+      if (formData.reportingManager && formData.reportingManager.length > 0) {
+        fData.append("managers", JSON.stringify(formData.reportingManager));
+      }
 
       // ── Enum field: only send when a real value is selected ──
       if (formData.gender) fData.append("gender", formData.gender);
@@ -225,6 +252,8 @@ export default function EditEmployee() {
 
       // ── Number field: only send when filled ──
       if (formData.basicSalary) fData.append("salary", formData.basicSalary);
+      if (formData.salaryRemark) fData.append("salaryRemark", formData.salaryRemark);
+      if (formData.salaryDate) fData.append("salaryDate", formData.salaryDate);
 
       fData.append("assets", JSON.stringify(selectedAssets));
       fData.append("location", JSON.stringify({
@@ -399,15 +428,50 @@ export default function EditEmployee() {
 
                 <F label="Designation"><input name="designation" value={formData.designation} onChange={handleInputChange} className={inputCls} placeholder="e.g. Senior Manager" /></F>
                 
-                <F label="Reporting Manager">
-                   <div className="relative">
-                      <select name="reportingManager" value={formData.reportingManager} onChange={handleInputChange} className={selectCls} disabled={!formData.companyId}>
-                         <option value="">Select Manager</option>
-                         {managers.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-3 text-gray-300 pointer-events-none" size={16} />
-                   </div>
-                </F>
+                <F label="Reporting Managers">
+                    <div className="relative group">
+                       <div className={`w-full min-h-[40px] border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-700 bg-white focus-within:ring-4 focus-within:ring-blue-500/5 focus-within:border-blue-500 transition-all ${!formData.companyId ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                          <div className="flex flex-wrap gap-1.5">
+                             {formData.reportingManager.length === 0 ? (
+                                <span className="text-gray-300">Select Managers</span>
+                             ) : (
+                                formData.reportingManager.map(id => {
+                                   const m = managers.find(man => man._id === id);
+                                   return (
+                                      <span key={id} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 border border-blue-100">
+                                         {m?.name || id}
+                                         <X size={10} className="cursor-pointer hover:text-blue-900" onClick={(e) => { e.stopPropagation(); handleManagerToggle(id); }} />
+                                      </span>
+                                   );
+                                })
+                             )}
+                          </div>
+                       </div>
+                       
+                       {formData.companyId && (
+                          <div className="absolute top-full left-0 w-full pt-1 z-50 hidden group-hover:block">
+                             <div className="bg-white border border-gray-100 rounded-xl shadow-xl py-2 max-h-48 overflow-y-auto no-scrollbar">
+                                {managers.length === 0 ? (
+                                   <p className="px-4 py-2 text-[10px] text-gray-400 italic">No managers found</p>
+                                ) : (
+                                   managers.map(m => (
+                                      <div 
+                                         key={m._id} 
+                                         onClick={() => handleManagerToggle(m._id)}
+                                         className="px-4 py-1.5 hover:bg-slate-50 flex items-center justify-between cursor-pointer transition-colors"
+                                      >
+                                         <span className={`text-[11px] font-bold ${formData.reportingManager.includes(m._id) ? 'text-blue-600' : 'text-gray-600'}`}>
+                                            {m.name}
+                                         </span>
+                                         {formData.reportingManager.includes(m._id) && <Plus size={12} className="text-blue-600 rotate-45" />}
+                                      </div>
+                                   ))
+                                )}
+                             </div>
+                          </div>
+                       )}
+                    </div>
+                 </F>
 
                 <F label="Employment Type">
                    <select name="employmentType" value={formData.employmentType} onChange={handleInputChange} className={selectCls}>
@@ -517,13 +581,69 @@ export default function EditEmployee() {
                       className="absolute right-4 top-3 text-gray-300 hover:text-gray-500 transition-colors"
                     >
                       {showSalary ? <EyeOff size={16}/> : <Eye size={16}/>}
-                    </button>
+                   </button>
                   </div>
                 </F>
                 <F label="A/C Number"><input name="accountNumber" value={formData.accountNumber} onChange={handleInputChange} className={inputCls} /></F>
                 <F label="Bank Name"><input name="bankName" value={formData.bankName} onChange={handleInputChange} className={inputCls} placeholder="e.g. HDFC Bank" /></F>
                 <F label="IFSC Code"><input name="ifscCode" value={formData.ifscCode} onChange={handleInputChange} className={inputCls} /></F>
-             </div>
+                 {String(formData.basicSalary) !== String(initialSalary) && (
+                    <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <F label="Salary Change Date" required>
+                        <input 
+                          type="date"
+                          name="salaryDate" 
+                          value={formData.salaryDate} 
+                          onChange={handleInputChange} 
+                          className={`${inputCls} border-blue-200 bg-blue-50/20`} 
+                        />
+                      </F>
+                      <F label="Salary Change Remark" required>
+                        <input 
+                          name="salaryRemark" 
+                          value={formData.salaryRemark} 
+                          onChange={handleInputChange} 
+                          className={`${inputCls} border-blue-200 bg-blue-50/20`} 
+                          placeholder="Why is the salary being changed? (e.g., Annual Hike, Promotion)" 
+                        />
+                      </F>
+                    </div>
+                 )}
+              </div>
+
+              {/* Salary History List */}
+              {salaryHistory.length > 0 && (
+                <div className="mt-8 pt-8 border-t border-slate-100">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Info size={14} className="text-blue-500" />
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Salary Revision History</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {[...salaryHistory].reverse().map((record, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 group hover:border-blue-100 transition-all">
+                        <div className="flex items-center gap-4">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Previous</span>
+                            <span className="text-sm font-bold text-gray-500">₹{record.previousSalary?.toLocaleString() || 0}</span>
+                          </div>
+                          <div className="w-4 h-px bg-slate-200" />
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-blue-400 uppercase tracking-tighter">New</span>
+                            <span className="text-sm font-bold text-blue-600">₹{record.newSalary?.toLocaleString() || 0}</span>
+                          </div>
+                        </div>
+                        <div className="flex-1 px-8">
+                          <p className="text-[11px] font-medium text-gray-600 line-clamp-1 italic">"{record.remark || 'No remark provided'}"</p>
+                          <p className="text-[9px] text-gray-400 mt-0.5">Changed on {new Date(record.changedAt).toLocaleDateString()} by {record.changedBy?.name || 'Admin'}</p>
+                        </div>
+                        <div className="flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[9px] font-bold uppercase">
+                          {((record.newSalary - record.previousSalary) / (record.previousSalary || 1) * 100).toFixed(1)}% {record.newSalary > record.previousSalary ? '↑' : '↓'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
           </div>
 
           {/* DOCUMENTS SECTION */}

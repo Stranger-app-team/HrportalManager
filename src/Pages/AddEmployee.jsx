@@ -45,10 +45,11 @@ export default function AddEmployee() {
     firstName: '', middleName: '', lastName: '',
     email: '', contactNumber: '+91', gender: '', dateOfBirth: '',
     employeeId: '', designation: '', department: '',
-    reportingManager: '', employmentType: 'Full Time', dateOfJoining: '',
+    reportingManager: [], employmentType: 'Full Time', dateOfJoining: '',
     workLocation: 'Office', companyId: '', addressLine: '', city: '',
     pincode: '', officeEmail: '',
     temporaryPassword: '', roleLevel: 'Employee', basicSalary: '',
+    salaryDate: new Date().toISOString().split('T')[0],
     accountNumber: '', bankName: '', ifscCode: ''
   });
 
@@ -85,7 +86,7 @@ export default function AddEmployee() {
   // ─── Chained Data Fetching ───
   const handleCompanyChange = async (e) => {
     const companyId = e.target.value;
-    setFormData(prev => ({ ...prev, companyId, department: '', reportingManager: '' }));
+    setFormData(prev => ({ ...prev, companyId, department: '', reportingManager: [] }));
     setDepartments([]);
     setManagers([]);
     setAvailableAssets([]);
@@ -146,6 +147,16 @@ export default function AddEmployee() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleManagerToggle = (managerId) => {
+    setFormData(prev => {
+      const current = prev.reportingManager || [];
+      const updated = current.includes(managerId)
+        ? current.filter(id => id !== managerId)
+        : [...current, managerId];
+      return { ...prev, reportingManager: updated };
+    });
+  };
+
   const toggleAsset = (assetId) => {
     setSelectedAssets(prev => 
       prev.includes(assetId) ? prev.filter(id => id !== assetId) : [...prev, assetId]
@@ -181,7 +192,9 @@ export default function AddEmployee() {
       // ── ObjectId fields: only append when a real value is selected ──
       // Sending an empty string "" for an ObjectId crashes MongoDB on production
       if (formData.department)       fData.append("department", formData.department);
-      if (formData.reportingManager) fData.append("manager", formData.reportingManager);
+      if (formData.reportingManager && formData.reportingManager.length > 0) {
+        fData.append("managers", JSON.stringify(formData.reportingManager));
+      }
 
       // ── Enum field: only append when a real value is selected ──
       if (formData.gender) fData.append("gender", formData.gender);
@@ -192,6 +205,7 @@ export default function AddEmployee() {
 
       // ── Number field: only append when filled ──
       if (formData.basicSalary) fData.append("salary", formData.basicSalary);
+      if (formData.salaryDate) fData.append("salaryDate", formData.salaryDate);
 
       fData.append("assets", JSON.stringify(selectedAssets));
 
@@ -348,15 +362,50 @@ export default function AddEmployee() {
 
                 <F label="Designation"><input name="designation" value={formData.designation} onChange={handleInputChange} className={inputCls} placeholder="e.g. Senior Manager" /></F>
                 
-                <F label="Reporting Manager">
-                   <div className="relative">
-                      <select name="reportingManager" value={formData.reportingManager} onChange={handleInputChange} className={selectCls} disabled={!formData.companyId}>
-                         <option value="">Select Manager</option>
-                         {managers.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-3 text-gray-300 pointer-events-none" size={16} />
-                   </div>
-                </F>
+                 <F label="Reporting Managers">
+                    <div className="relative group">
+                       <div className={`w-full min-h-[40px] border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-700 bg-white focus-within:ring-4 focus-within:ring-blue-500/5 focus-within:border-blue-500 transition-all ${!formData.companyId ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                          <div className="flex flex-wrap gap-1.5">
+                             {formData.reportingManager.length === 0 ? (
+                                <span className="text-gray-300">Select Managers</span>
+                             ) : (
+                                formData.reportingManager.map(id => {
+                                   const m = managers.find(man => man._id === id);
+                                   return (
+                                      <span key={id} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 border border-blue-100">
+                                         {m?.name || id}
+                                         <X size={10} className="cursor-pointer hover:text-blue-900" onClick={(e) => { e.stopPropagation(); handleManagerToggle(id); }} />
+                                      </span>
+                                   );
+                                })
+                             )}
+                          </div>
+                       </div>
+                       
+                       {formData.companyId && (
+                          <div className="absolute top-full left-0 w-full pt-1 z-50 hidden group-hover:block">
+                             <div className="bg-white border border-gray-100 rounded-xl shadow-xl py-2 max-h-48 overflow-y-auto no-scrollbar">
+                                {managers.length === 0 ? (
+                                   <p className="px-4 py-2 text-[10px] text-gray-400 italic">No managers found</p>
+                                ) : (
+                                   managers.map(m => (
+                                      <div 
+                                         key={m._id} 
+                                         onClick={() => handleManagerToggle(m._id)}
+                                         className="px-4 py-1.5 hover:bg-slate-50 flex items-center justify-between cursor-pointer transition-colors"
+                                      >
+                                         <span className={`text-[11px] font-bold ${formData.reportingManager.includes(m._id) ? 'text-blue-600' : 'text-gray-600'}`}>
+                                            {m.name}
+                                         </span>
+                                         {formData.reportingManager.includes(m._id) && <Plus size={12} className="text-blue-600 rotate-45" />}
+                                      </div>
+                                   ))
+                                )}
+                             </div>
+                          </div>
+                       )}
+                    </div>
+                 </F>
 
                 <F label="Employment Type">
                    <select name="employmentType" value={formData.employmentType} onChange={handleInputChange} className={selectCls}>
@@ -450,6 +499,7 @@ export default function AddEmployee() {
              <SecHeader icon={CreditCard} title="Payroll & Banking" subtitle="Salary disbursement" />
              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <F label="Basic Salary (₹)"><input name="basicSalary" value={formData.basicSalary} onChange={handleInputChange} className={inputCls} placeholder="0.00" /></F>
+                <F label="Salary Date"><input type="date" name="salaryDate" value={formData.salaryDate} onChange={handleInputChange} className={inputCls} /></F>
                 <F label="A/C Number"><input name="accountNumber" value={formData.accountNumber} onChange={handleInputChange} className={inputCls} /></F>
                 <F label="Bank Name"><input name="bankName" value={formData.bankName} onChange={handleInputChange} className={inputCls} placeholder="e.g. HDFC Bank" /></F>
                 <F label="IFSC Code"><input name="ifscCode" value={formData.ifscCode} onChange={handleInputChange} className={inputCls} /></F>

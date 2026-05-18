@@ -13,7 +13,7 @@ export default function AddEmployeeForm() {
     employeeId: '',
     department: '',
     designation: '',
-    reportingManager: '',
+    reportingManager: [],
     employmentType: '',
     dateOfJoining: '',
     workLocation: '',
@@ -238,27 +238,45 @@ export default function AddEmployeeForm() {
                 className="w-full h-[48px] bg-transparent border border-[#6A94D4] rounded-md px-3 pt-5 text-white text-[13px] placeholder:text-[#C3CADF]"/>
             </div>
 
-            {/* Reporting Manager */}
-            <div className="relative">
-              <span className="absolute top-[10px] left-4 text-[11px] text-[#D0D9E8]">
-                Reporting Manager
+            {/* Reporting Managers */}
+            <div className="relative group">
+              <span className="absolute top-[10px] left-4 text-[11px] text-[#D0D9E8] z-10">
+                Reporting Managers
               </span>
-              <select
-                name="reportingManager"
-                value={formData.reportingManager}
-                onChange={handleInputChange}
-                className="w-full h-[48px] bg-transparent border border-[#6A94D4]
-                rounded-md px-3 pt-5 text-white appearance-none"
-              >
-                <option value="" disabled hidden></option>
-                <option className="text-black">John Doe</option>
-                <option className="text-black">Jane Smith</option>
-                <option className="text-black">Rahul Patil</option>
-                <option className="text-black">Sneha Shah</option>
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-               <span style={{width: "0", height: "0", borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "6px solid white",display: "inline-block",}}></span>
-               </span>
+              <div className="w-full min-h-[48px] bg-transparent border border-[#6A94D4] rounded-md px-3 pt-5 text-white text-[13px] flex flex-wrap gap-1 cursor-pointer">
+                {formData.reportingManager.length === 0 ? (
+                  <span className="text-[#C3CADF]">Select Managers</span>
+                ) : (
+                  formData.reportingManager.map(id => (
+                    <span key={id} className="bg-blue-600/30 text-white px-2 py-0.5 rounded text-[10px] flex items-center gap-1 border border-blue-400/50">
+                      {id} 
+                      <X size={10} className="cursor-pointer hover:text-red-300" onClick={(e) => {
+                        e.stopPropagation();
+                        setFormData(prev => ({ ...prev, reportingManager: prev.reportingManager.filter(m => m !== id) }));
+                      }} />
+                    </span>
+                  ))
+                )}
+              </div>
+              
+              <div className="absolute top-full left-0 w-full mt-1 bg-[#1E293B] border border-[#6A94D4] rounded-md shadow-xl z-50 py-2 hidden group-hover:block max-h-40 overflow-y-auto">
+                {["John Doe", "Jane Smith", "Rahul Patil", "Sneha Shah"].map(m => (
+                  <div 
+                    key={m} 
+                    onClick={() => {
+                      setFormData(prev => {
+                        const current = prev.reportingManager || [];
+                        const updated = current.includes(m) ? current.filter(id => id !== m) : [...current, m];
+                        return { ...prev, reportingManager: updated };
+                      });
+                    }}
+                    className="px-4 py-1.5 hover:bg-slate-700 flex items-center justify-between cursor-pointer text-white text-[12px]"
+                  >
+                    <span>{m}</span>
+                    {formData.reportingManager.includes(m) && <CheckCircle2 size={12} className="text-blue-400" />}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Employment Type */}

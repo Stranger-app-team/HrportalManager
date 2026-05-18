@@ -57,14 +57,12 @@ export default function LeaveApproval() {
       const data = await res.json();
       const comps = data.company || [];
       setCompanies(comps);
-      if (!filters.companyId && comps.length > 0) {
-        setFilters(prev => ({ ...prev, companyId: comps[0]._id }));
-      }
+      // We removed the auto-selection of the first company so "All Companies" ("") remains the default
     } catch (err) { console.error(err); }
   };
 
   const fetchLeaves = useCallback(async () => {
-    if (!filters.companyId) return;
+    if (filters.companyId === null || filters.companyId === undefined) return;
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -75,10 +73,11 @@ export default function LeaveApproval() {
       console.log(result)  
       if (result.success) {
         const data = result.data || [];
-        const companyFiltered = data.filter(l => 
-          l.companyId === filters.companyId && 
-          l.status?.toLowerCase() !== 'cancelled'
-        );
+        const companyFiltered = data.filter(l => {
+          const leaveCompanyId = l.companyId?._id ? String(l.companyId._id) : String(l.companyId);
+          return (!filters.companyId || filters.companyId === 'all' || leaveCompanyId === String(filters.companyId)) && 
+          l.status?.toLowerCase() !== 'cancelled';
+        });
 
         // Sort: Pending -> Approved -> Rejected, and then by most recent first
         const sorted = [...companyFiltered].sort((a, b) => {
@@ -172,7 +171,7 @@ export default function LeaveApproval() {
                 <CustomSelector 
                     icon={<Building size={11}/>}
                     value={filters.companyId}
-                    options={companies.map(c => ({ id: c._id, name: c.companyName }))}
+                    options={[{id: "", name: "All Companies"}, ...companies.map(c => ({ id: c._id, name: c.companyName }))]}
                     onChange={(id) => setFilters({...filters, companyId: id})}
                     minWidth="110px"
                 />

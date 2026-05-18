@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../config/api";
 import { useParams, useNavigate } from "react-router-dom";
-import { X, ChevronDown, Eye, EyeOff, Info, Briefcase, MapPin, Lock, CreditCard, Paperclip, Monitor, Laptop, CheckCircle, Smartphone, Speaker, Keyboard, Mouse, Upload, Calendar, Clock } from "lucide-react";
+import { X, ChevronDown, Eye, EyeOff, Info, Briefcase, MapPin, Lock, CreditCard, Paperclip, Monitor, Laptop, CheckCircle, Smartphone, Speaker, Keyboard, Mouse, Upload, Calendar, Clock, User } from "lucide-react";
 import { getFullUrl } from '../utils/urlHelper';
 import AttendanceHistoryModal from "../components/Employees/AttendanceHistoryModal";
 
@@ -135,9 +135,22 @@ export default function Profile() {
                       <img src={imageUrl} className="w-full h-full object-cover" alt="Profile" />
                    </div>
                 </div>
-                <div className="text-center mt-6">
-                   <h3 className="text-sm font-bold text-gray-900">{employee.user?.name}</h3>
-                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">{employee.designation}</p>
+                <div className="text-center mt-6 w-full">
+                   <h3 className="text-base font-extrabold text-gray-900 tracking-tight">{employee.user?.name}</h3>
+                   <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mt-1 flex items-center justify-center gap-1.5">
+                      <Briefcase size={12} /> {employee.designation}
+                   </p>
+                   <div className="mt-3 bg-gray-50 p-2.5 rounded-2xl border border-gray-100/80 shadow-sm">
+                      <p className="text-gray-400 font-bold uppercase text-[9px] tracking-widest mb-1">Reporting Manager</p>
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+                          <User size={12} className="text-blue-600" />
+                        </div>
+                        <p className="text-[11px] text-gray-700 font-bold">
+                          {employee.managers?.length > 0 ? employee.managers.map(m => m.name).join(", ") : (employee.manager?.name || "Direct to Company")}
+                        </p>
+                      </div>
+                   </div>
                 </div>
              </div>
 
@@ -162,7 +175,7 @@ export default function Profile() {
                 <DataBox label="Company" value={getCompanyName(employee.user?.companyId)} />
                 <DataBox label="Department" value={typeof employee.department === "string" ? employee.department : (employee.department?.departmentName || employee.department?.name || "General")} />
                 <DataBox label="Designation" value={employee.designation} />
-                <DataBox label="Reporting Manager" value={employee.manager?.name || "Direct to Company"} />
+                <DataBox label="Reporting Manager" value={employee.managers?.length > 0 ? employee.managers.map(m => m.name).join(", ") : (employee.manager?.name || "Direct to Company")} />
                 <DataBox label="Employment Type" value={employee.employmentType || "Full Time"} />
                 <DataBox label="Work Location" value={employee.workLocation || "Office"} />
                 <DataBox label="Employee ID" value={employee.employeeId} />
@@ -239,6 +252,40 @@ export default function Profile() {
                 <DataBox label="Bank Name" value={employee.bankDetails?.bankName} />
                 <DataBox label="IFSC Code" value={employee.bankDetails?.ifsc} />
              </div>
+
+             {/* Salary History List */}
+             {employee.salaryHistory && employee.salaryHistory.length > 0 && (
+                <div className="mt-8 pt-8 border-t border-slate-100">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Info size={14} className="text-blue-500" />
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Salary Revision History</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {[...employee.salaryHistory].reverse().map((record, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 group hover:border-blue-100 transition-all">
+                        <div className="flex items-center gap-4">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Previous</span>
+                            <span className="text-sm font-bold text-gray-500">₹{record.previousSalary?.toLocaleString() || 0}</span>
+                          </div>
+                          <div className="w-4 h-px bg-slate-200" />
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-blue-400 uppercase tracking-tighter">New</span>
+                            <span className="text-sm font-bold text-blue-600">₹{record.newSalary?.toLocaleString() || 0}</span>
+                          </div>
+                        </div>
+                        <div className="flex-1 px-8">
+                          <p className="text-[11px] font-medium text-gray-600 line-clamp-1 italic">"{record.remark || 'No remark provided'}"</p>
+                          <p className="text-[9px] text-gray-400 mt-0.5">Changed on {new Date(record.changedAt).toLocaleDateString()} by {record.changedBy?.name || 'Admin'}</p>
+                        </div>
+                        <div className="flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[9px] font-bold uppercase">
+                          {((record.newSalary - record.previousSalary) / (record.previousSalary || 1) * 100).toFixed(1)}% {record.newSalary > record.previousSalary ? '↑' : '↓'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
           </div>
 
           {/* DOCUMENTS SECTION */}
