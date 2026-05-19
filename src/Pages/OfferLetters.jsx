@@ -323,10 +323,11 @@ export default function OfferLetters() {
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto p-4">
-              <div
-                className="border border-slate-200 rounded-lg overflow-hidden"
-                dangerouslySetInnerHTML={{ __html: preview.htmlContent }}
+            <div className="flex-1 p-4 bg-slate-50">
+              <iframe
+                srcDoc={preview.htmlContent}
+                className="w-full h-full min-h-[500px] border-none rounded-lg bg-white shadow-sm"
+                title="Offer Letter Preview"
               />
             </div>
           </div>

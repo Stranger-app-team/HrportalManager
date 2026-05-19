@@ -5,8 +5,19 @@ import { FiClock, FiCalendar, FiCheckCircle, FiUser, FiArrowRight, FiInfo, FiHas
 export default function EmployeeLifecycleModal({ isOpen, onClose, employee }) {
   if (!isOpen || !employee) return null;
 
-  const history = employee.statusHistory || [];
-  const sortedHistory = [...history].sort((a, b) => new Date(b.changedAt) - new Date(a.changedAt));
+  const statusHistory = (employee.statusHistory || []).map(item => ({
+    ...item,
+    historyType: 'status',
+    keyDate: new Date(item.changedAt)
+  }));
+
+  const profileHistory = (employee.profileHistory || []).map(item => ({
+    ...item,
+    historyType: 'profile',
+    keyDate: new Date(item.changedAt)
+  }));
+
+  const combinedHistory = [...statusHistory, ...profileHistory].sort((a, b) => b.keyDate - a.keyDate);
 
   const formatDate = (date) => date ? new Date(date).toLocaleDateString("en-GB", {
     day: 'numeric', month: 'short', year: 'numeric'
@@ -26,7 +37,7 @@ export default function EmployeeLifecycleModal({ isOpen, onClose, employee }) {
       <div className="p-1 space-y-8 max-h-[75vh] overflow-y-auto custom-scrollbar">
         
         {/* Header Summary Card */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className={`grid gap-4 ${employee.deactivatedAt ? "grid-cols-4" : "grid-cols-3"}`}>
           <div className="flex flex-col gap-1">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Status</span>
             <div className={`w-fit px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase ${getStatusColor(employee.status)}`}>
@@ -41,6 +52,12 @@ export default function EmployeeLifecycleModal({ isOpen, onClose, employee }) {
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Last Working Day</span>
             <span className="text-xs font-bold text-slate-700">{formatDate(employee.lastWorkingDate)}</span>
           </div>
+          {employee.deactivatedAt && (
+            <div className="flex flex-col gap-1 animate-in fade-in zoom-in duration-300">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Actual Exit Date</span>
+              <span className="text-xs font-bold text-slate-700">{formatDate(employee.deactivatedAt)}</span>
+            </div>
+          )}
         </div>
 
         {/* Notice Period Details (If Resigned/Notice Complete) */}
@@ -93,44 +110,77 @@ export default function EmployeeLifecycleModal({ isOpen, onClose, employee }) {
         <div className="relative">
           <div className="flex items-center gap-2 mb-6">
             <FiClock size={14} className="text-indigo-500" />
-            <h4 className="text-xs font-black text-slate-700 uppercase tracking-widest">Journey History</h4>
+            <h4 className="text-xs font-black text-slate-700 uppercase tracking-widest">Journey & Profile History</h4>
           </div>
 
           <div className="space-y-8 ml-3 border-l-[1.5px] border-slate-100 pl-8">
-            {sortedHistory.map((item, idx) => (
+            {combinedHistory.map((item, idx) => (
               <div key={idx} className="relative group">
                 {/* Dot */}
-                <div className="absolute -left-[37px] top-1 w-4 h-4 rounded-full bg-white border-[1.5px] border-slate-200 group-hover:border-indigo-400 transition-colors flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-indigo-400 transition-colors" />
+                <div className={`absolute -left-[37px] top-1 w-4 h-4 rounded-full bg-white border-[1.5px] transition-colors flex items-center justify-center ${item.historyType === 'profile' ? 'border-indigo-200 group-hover:border-indigo-500' : 'border-slate-200 group-hover:border-indigo-400'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full transition-colors ${item.historyType === 'profile' ? 'bg-indigo-400 group-hover:bg-indigo-600' : 'bg-slate-300 group-hover:bg-indigo-400'}`} />
                 </div>
                 
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-slate-500">{formatDate(item.changedAt)}</span>
-                      <span className="text-slate-200">•</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">{String(item.from).replace('_', ' ')}</span>
-                        <FiArrowRight size={10} className="text-slate-300" />
-                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border ${getStatusColor(item.to)}`}>
-                          {String(item.to).replace('_', ' ')}
+                {item.historyType === 'status' ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-500">{formatDate(item.changedAt)}</span>
+                        <span className="text-slate-200">•</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase">{String(item.from).replace('_', ' ')}</span>
+                          <FiArrowRight size={10} className="text-slate-300" />
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border ${getStatusColor(item.to)}`}>
+                            {String(item.to).replace('_', ' ')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {item.reason && (
+                      <div className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100 group-hover:bg-slate-50 transition-colors">
+                        <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                          {item.reason}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold uppercase tracking-wider opacity-60">
+                      <FiUser size={10}/> HR Action
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-500">{formatDate(item.changedAt)}</span>
+                        <span className="text-slate-200">•</span>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border bg-indigo-50 text-indigo-700 border-indigo-100">
+                          Profile Updated
                         </span>
                       </div>
                     </div>
-                  </div>
-                  
-                  {item.reason && (
-                    <div className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100 group-hover:bg-slate-50 transition-colors">
-                      <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                        {item.reason}
-                      </p>
-                    </div>
-                  )}
+                    
+                    {item.changes && item.changes.length > 0 && (
+                      <div className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100 group-hover:bg-slate-50 transition-colors">
+                        <div className="space-y-1.5">
+                          {item.changes.map((c, cIdx) => (
+                            <div key={cIdx} className="text-[11px] text-slate-600 leading-relaxed font-medium flex flex-wrap items-center gap-1">
+                              <span className="font-bold text-slate-700">{c.field}:</span>
+                              <span className="text-slate-400 line-through truncate max-w-[120px]">{c.oldValue || 'None'}</span>
+                              <FiArrowRight size={8} className="text-slate-300 shrink-0" />
+                              <span className="text-slate-900 font-semibold truncate max-w-[120px]">{c.newValue || 'None'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                  <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold uppercase tracking-wider opacity-60">
-                    <FiUser size={10}/> HR Action
+                    <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold uppercase tracking-wider opacity-60">
+                      <FiUser size={10}/> Action By {item.changedByName || 'System'}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ))}
 

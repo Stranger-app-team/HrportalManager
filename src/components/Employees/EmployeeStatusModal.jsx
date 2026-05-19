@@ -69,20 +69,12 @@ export default function EmployeeStatusModal({ isOpen, onClose, employee, onRefre
           { value: "inactive", label: "Mark Inactive", desc: "Direct deactivation" }
         ];
       case "resigned":
-        const today = moment().tz('Asia/Kolkata').startOf('day');
-        const end = moment(employee.lastWorkingDate).tz('Asia/Kolkata').startOf('day');
-        const isNoticeComplete = employee.lastWorkingDate && end.isSameOrBefore(today);
-        
-        const resActions = [
+        return [
+          { value: "complete_exit", label: "Complete Exit Process", desc: "Verify checklist and seal account" },
           { value: "resigned", label: "Update Notice Dates", desc: "Modify notice start or last working day" },
           { value: "withdraw", label: "Withdraw Resignation", desc: "Revert back to active" },
           { value: "terminated", label: "Terminated", desc: "Immediate dismissal during notice" }
         ];
-
-        if (isNoticeComplete) {
-          resActions.unshift({ value: "complete_exit", label: "Complete Exit Process", desc: "Verify checklist and seal account" });
-        }
-        return resActions;
       case "terminated":
         return [
           { value: "complete_exit", label: "Complete Exit Process", desc: "Verify checklist and seal account" },
