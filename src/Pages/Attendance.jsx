@@ -594,13 +594,27 @@ export default function Attendance() {
           { label: "Monthly Absent", value: dashboardCards.monthly?.absent || 0, icon: X, color: "rose", sub: "TOTAL" },
           { label: "Monthly Late", value: dashboardCards.monthly?.late || 0, icon: Activity, color: "amber", sub: "TOTAL" },
           { label: "Attendance Ratio", value: dashboardCards.monthly?.attendanceRatio || 0, icon: BarChart3, color: "blue", sub: "PERCENTAGE" }
-        ]).map((s, idx) => (
+        ]).map((s, idx) => {
+          const activeBorderMap = {
+            emerald: 'border-emerald-200',
+            rose: 'border-rose-200',
+            blue: 'border-blue-200',
+            amber: 'border-amber-200',
+          };
+          const iconBgMap = {
+            emerald: 'bg-emerald-500/10 text-emerald-600',
+            rose: 'bg-rose-500/10 text-rose-600',
+            blue: 'bg-blue-500/10 text-blue-600',
+            amber: 'bg-amber-500/10 text-amber-600',
+          };
+          const isActive = statusFilter === s.status;
+          return (
           <div 
             key={idx} 
             onClick={() => s.status && setStatusFilter(statusFilter === s.status ? null : s.status)}
-            className="bg-white border border-slate-200 shadow-sm rounded-lg p-3 flex items-center gap-3 transition-standard hover:shadow-md cursor-pointer"
+            className={`bg-white rounded-lg p-3 flex items-center gap-3 transition-all hover:shadow-md cursor-pointer ${isActive ? `border-2 ${activeBorderMap[s.color] || 'border-slate-300'} shadow-sm` : 'border border-slate-200 shadow-sm'}`}
           >
-            <div className={`w-9 h-9 rounded-md bg-${s.color}-500/10 text-${s.color}-600 flex items-center justify-center shrink-0`}>
+            <div className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${iconBgMap[s.color] || ''}`}>
               <s.icon size={18} />
             </div>
             <div>
@@ -611,7 +625,8 @@ export default function Attendance() {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
 
