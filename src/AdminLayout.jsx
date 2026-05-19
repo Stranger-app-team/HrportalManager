@@ -22,6 +22,7 @@ import { IndianRupee } from "lucide-react";
 
 import { API_BASE_URL } from "./config/api";
 import { getFullUrl } from "./utils/urlHelper";
+import NotificationBell from "./components/Shared/NotificationBell";
 
 export default function AdminLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -85,6 +86,7 @@ useEffect(() => {
     if (path.includes("/add-company")) return { title: "Entity Expansion", sub: "Register New Organization" };
     if (path.includes("/add-department")) return { title: "Structure Management", sub: "Create Business Unit" };
     if (path.includes("/wfh-requests")) return { title: "Remote Work", sub: "Manage WFH Applications & Policy" };
+    if (path.includes("/offer-letters")) return { title: "Offer Letters", sub: "Pending Approvals & Letter History" };
     return { title: "Manager Portal", sub: "Team Management System" };
 
   };
@@ -307,6 +309,7 @@ useEffect(() => {
               badge: true 
             },
             { to: "/dashboard/wfh-requests", icon: FiHome, label: "WFH Requests" },
+            { to: "/dashboard/offer-letters", icon: FiFileText, label: "Offer Letters", badge: true },
           ].filter(item => !item.hidden).map((item, idx) => {
 
             if (item.divider) {
@@ -386,6 +389,7 @@ useEffect(() => {
              </div>
 
              <div className="flex items-center gap-4">
+                <NotificationBell />
                 <div className="relative" ref={dropdownRef}>
                    <button 
                      onClick={() => setSelectedCard(selectedCard === "avatar" ? null : "avatar")}

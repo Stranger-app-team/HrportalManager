@@ -15,6 +15,7 @@ import Tickets from "./Pages/Tickets";
 import Assets from "./Pages/Assets";
 import EmployeeRequests from "./Pages/EmployeeRequests";
 import WFHRequests from "./Pages/WFHRequests";
+import OfferLetters from "./Pages/OfferLetters";
 
 
 
@@ -28,6 +29,7 @@ import CompanyDetails from "./Pages/CompanyDetails";
 import AddCompany from "./Pages/AddCompany";
 import Departments from "./Pages/Departments";
 import AddDepartment from "./Pages/AddDepartment";
+import Notifications from "./Pages/Notifications";
 
 function App() {
   return (
@@ -53,6 +55,8 @@ function App() {
           <Route path="assets" element={<Assets />} />
           <Route path="employee-requests" element={<EmployeeRequests />} />
           <Route path="wfh-requests" element={<WFHRequests />} />
+          <Route path="offer-letters" element={<OfferLetters />} />
+          <Route path="notifications" element={<Notifications />} />
 
 
 
