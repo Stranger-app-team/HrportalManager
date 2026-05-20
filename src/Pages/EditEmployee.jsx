@@ -35,6 +35,9 @@ export default function EditEmployee() {
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showSalary, setShowSalary] = useState(false);
+  
+  const loggedInUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const isManager = loggedInUser.userType === 'manager';
 
   // Data Lists
   const [companies, setCompanies] = useState([]);
@@ -536,6 +539,7 @@ export default function EditEmployee() {
              </div>
 
              {/* Portal Access */}
+             {!isManager && (
              <div className="bg-white p-6 rounded-lg border border-slate-100 shadow-lg shadow-slate-200/40">
                 <SecHeader icon={Lock} title="Portal Access" subtitle="Login credentials" />
                 <div className="space-y-6">
@@ -559,9 +563,11 @@ export default function EditEmployee() {
                    </div>
                 </div>
              </div>
+             )}
           </div>
 
           {/* BANKING SECTION */}
+          {!isManager && (
           <div className="bg-white p-6 rounded-lg border border-slate-100 shadow-lg shadow-slate-200/40">
              <SecHeader icon={CreditCard} title="Payroll & Banking" subtitle="Salary disbursement" />
              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -645,6 +651,7 @@ export default function EditEmployee() {
                 </div>
               )}
           </div>
+          )}
 
           {/* DOCUMENTS SECTION */}
           <div className="bg-white p-6 rounded-lg border border-slate-100 shadow-lg shadow-slate-200/40 mb-12">

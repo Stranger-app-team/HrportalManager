@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import { SocketProvider } from "./context/SocketContext";
 
 import LoginScreen from "./LoginScreen";
 import AdminLayout from "./AdminLayout";
@@ -33,8 +35,10 @@ import Notifications from "./Pages/Notifications";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <SocketProvider>
+      <BrowserRouter>
+        <ToastContainer />
+        <Routes>
 
         {/* ================= LOGIN ================= */}
         <Route path="/login" element={<LoginScreen />} />
@@ -76,7 +80,8 @@ function App() {
         </Route>
 
       </Routes>
-    </BrowserRouter>
+      </BrowserRouter>
+    </SocketProvider>
   );
 }
 

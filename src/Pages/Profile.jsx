@@ -37,6 +37,8 @@ const DataBox = ({ label, value }) => (
 export default function Profile() {
   const { employeeId } = useParams();
   const navigate = useNavigate();
+  const loggedInUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const isManager = loggedInUser.userType === 'manager';
   const [employee, setEmployee] = useState(null);
   const [companies, setCompanies] = useState([]);
   const [showSalary, setShowSalary] = useState(false);
@@ -111,12 +113,14 @@ export default function Profile() {
             >
               <Calendar size={16} /> Attendance
             </button>
+            {!isManager && (
             <button 
               onClick={() => navigate(`/dashboard/edit-employee/${employeeId}`)}
               className="flex items-center gap-2 bg-[#0B2D5C] text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-[#0B2D5C]/10 hover:bg-[#1a3a6c] transition-all"
             >
               Edit Profile
             </button>
+            )}
           </div>
         </div>
       </div>
@@ -218,6 +222,7 @@ export default function Profile() {
              </div>
 
              {/* Portal Access */}
+             {!isManager && (
              <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
                 <SecHeader icon={Lock} title="Portal Access" subtitle="Login credentials" />
                 <div className="space-y-6">
@@ -228,9 +233,11 @@ export default function Profile() {
                    </div>
                 </div>
              </div>
+             )}
           </div>
 
           {/* BANKING SECTION */}
+          {!isManager && (
           <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
              <SecHeader icon={CreditCard} title="Payroll & Banking" subtitle="Salary disbursement" />
              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -287,6 +294,7 @@ export default function Profile() {
                 </div>
               )}
           </div>
+          )}
 
           {/* DOCUMENTS SECTION */}
           <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm mb-12">

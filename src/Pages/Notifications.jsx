@@ -39,6 +39,17 @@ export default function Notifications() {
 
   useEffect(() => {
     fetchNotifications();
+
+    const handleNewNotification = (e) => {
+      const newNotif = e.detail;
+      setNotifications(prev => [newNotif, ...prev]);
+    };
+
+    window.addEventListener("new_notification", handleNewNotification);
+
+    return () => {
+      window.removeEventListener("new_notification", handleNewNotification);
+    };
   }, []);
 
   const markAsRead = async (id) => {

@@ -769,6 +769,7 @@ export default function Employees() {
 
                       {/* 1. Edit (Only for non-inactive) */}
                       {String(emp.status).toLowerCase() !== "inactive" ? (
+                        userRole !== "manager" && (
                         <button 
                           onClick={() => navigate(`/dashboard/edit-employee/${emp.employeeId}`)}
                           className="p-2 rounded-full text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition-all duration-300"
@@ -776,8 +777,10 @@ export default function Employees() {
                         >
                           <FiEdit2 size={16} />
                         </button>
+                        )
                       ) : (
                         /* Delete (Only for inactive) */
+                        userRole !== "manager" && (
                         <button 
                           onClick={() => handleDelete(emp.employeeId)}
                           className="p-2 rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all duration-300"
@@ -785,6 +788,7 @@ export default function Employees() {
                         >
                           <FiTrash2 size={16} />
                         </button>
+                        )
                       )}
 
                       {/* 2. Attendance History (Moved to Profile Page) */}
@@ -800,6 +804,7 @@ export default function Employees() {
                       </button> */}
 
                       {/* 3. Assets */}
+                      {userRole !== "manager" && (
                       <button 
                         onClick={() => {
                           setSelectedEmpForAsset(emp);
@@ -810,6 +815,7 @@ export default function Employees() {
                       >
                         <FiBox size={16} />
                       </button>
+                      )}
 
                       {/* 4. Lifecycle History */}
                       <button 

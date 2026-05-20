@@ -35,11 +35,19 @@ export default function NotificationBell() {
         setIsOpen(false);
       }
     };
+    
+    const handleNewNotification = (e) => {
+      const newNotif = e.detail;
+      setNotifications(prev => [newNotif, ...prev]);
+    };
+
     document.addEventListener("mousedown", handleOutsideClick);
+    window.addEventListener("new_notification", handleNewNotification);
 
     return () => {
       clearInterval(interval);
       document.removeEventListener("mousedown", handleOutsideClick);
+      window.removeEventListener("new_notification", handleNewNotification);
     };
   }, []);
 
@@ -129,7 +137,7 @@ export default function NotificationBell() {
             )}
           </div>
 
-          <div className="max-h-64 overflow-y-auto no-scrollbar">
+          <div className="max-h-[28rem] overflow-y-auto no-scrollbar">
             {notifications.length === 0 ? (
               <div className="py-8 text-center text-slate-400">
                 <FiBell className="mx-auto mb-2 opacity-30" size={24} />
@@ -145,9 +153,9 @@ export default function NotificationBell() {
                     {getIcon(n.type)}
                   </div>
                   <div className="flex-1 min-w-0 pr-4">
-                    <p className="text-[11.5px] font-black text-slate-700 leading-tight uppercase truncate">{n.title}</p>
-                    <p className="text-[10.5px] text-slate-500 mt-1 leading-normal">{n.message}</p>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wide block mt-1.5">{getRelativeTime(n.createdAt)}</span>
+                    <p className="text-[11.5px] font-black text-slate-700 leading-tight uppercase truncate" title={n.title}>{n.title}</p>
+                    <p className="text-[11px] text-slate-500 mt-1 leading-snug line-clamp-2" title={n.message}>{n.message}</p>
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wide block mt-1.5">{getRelativeTime(n.createdAt || new Date())}</span>
                   </div>
                   <button
                     onClick={(e) => markAsRead(n._id, e)}
