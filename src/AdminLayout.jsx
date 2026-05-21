@@ -132,6 +132,13 @@ useEffect(() => {
         const res = await fetch(`${API_BASE_URL}${endpoint}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+
+        if (res.status === 401) {
+          localStorage.clear();
+          window.location.href = "/login";
+          return;
+        }
+
         const data = await res.json();
 
         if (data.success) {
