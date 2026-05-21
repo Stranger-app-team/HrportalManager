@@ -28,7 +28,7 @@ export const SocketProvider = ({ children }) => {
             console.log('Connected to real-time notification server');
         });
 
-        newSocket.on('receive_notification', (notification) => {
+        newSocket.on('new_notification', (notification) => {
             console.log('Real-time notification received:', notification);
             toast.info(`🔔 ${notification.title}: ${notification.message}`, {
                 position: "top-right",
