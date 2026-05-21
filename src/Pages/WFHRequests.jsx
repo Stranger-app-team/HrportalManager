@@ -22,6 +22,7 @@ import {
   FiTrash2
 } from "react-icons/fi";
 import { API_BASE_URL } from "../config/api";
+import { getFullUrl } from "../utils/urlHelper";
 import moment from "moment-timezone";
 
 const WFHRequests = () => {
@@ -274,8 +275,12 @@ const WFHRequests = () => {
                     <tr key={req._id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-all group">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold text-xs">
-                            {req.name?.charAt(0)}
+                          <div className="w-8 h-8 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold text-xs overflow-hidden shrink-0">
+                            {req.employee?.profilePhoto ? (
+                              <img src={getFullUrl(req.employee.profilePhoto, API_BASE_URL)} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              req.name?.charAt(0)
+                            )}
                           </div>
                           <div>
                             <p className="text-[13px] font-bold text-slate-700 leading-tight">{req.name}</p>

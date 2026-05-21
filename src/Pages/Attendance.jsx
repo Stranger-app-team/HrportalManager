@@ -936,7 +936,21 @@ export default function Attendance() {
         >
           <div className={`space-y-2.5 ${!isEditing ? 'opacity-90' : ''}`}>
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-0.5">Personnel</label>
+              <div className="flex items-center gap-2">
+                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-0.5">Personnel</label>
+                 {formData.employeeId && (() => {
+                    const emp = employees.find(e => e._id === formData.employeeId);
+                    return emp?.profilePhoto ? (
+                      <div className="w-5 h-5 rounded overflow-hidden shrink-0">
+                        <img src={getFullUrl(emp.profilePhoto, API_BASE_URL)} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-5 h-5 rounded overflow-hidden shrink-0 bg-blue-50 text-blue-500 flex items-center justify-center font-black text-[10px]">
+                        {emp?.user?.name?.charAt(0) || emp?.name?.charAt(0) || '?'}
+                      </div>
+                    );
+                 })()}
+              </div>
               <CustomSelector
                 value={formData.employeeId}
                 options={employees.map(e => ({ id: e._id, name: e.user?.name }))}

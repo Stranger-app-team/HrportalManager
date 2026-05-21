@@ -4,6 +4,7 @@ import {
   FiSend, FiRefreshCw, FiSearch, FiAlertCircle, FiDownload
 } from 'react-icons/fi';
 import { API_BASE_URL } from '../config/api';
+import { getFullUrl } from '../utils/urlHelper';
 
 const STATUS_META = {
   pending_manager_approval: { label: 'Pending Approval', color: 'bg-amber-50 text-amber-600 border-amber-200', icon: FiClock },
@@ -199,8 +200,12 @@ export default function OfferLetters() {
                     <tr key={letter._id} className="hover:bg-slate-50 transition-all group">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center font-black text-[11px] border border-blue-100 shrink-0">
-                            {letter.employeeName?.charAt(0)}
+                          <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center font-black text-[11px] border border-blue-100 shrink-0 overflow-hidden">
+                            {letter.employee?.profilePhoto ? (
+                              <img src={getFullUrl(letter.employee.profilePhoto, API_BASE_URL)} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              letter.employeeName?.charAt(0)
+                            )}
                           </div>
                           <div className="min-w-0">
                             <p className="text-[11px] font-bold text-slate-800 truncate">{letter.employeeName}</p>

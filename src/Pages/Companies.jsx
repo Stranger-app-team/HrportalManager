@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiMoreVertical, FiEdit, FiTrash2, FiSearch, FiMonitor, FiMapPin, FiMail, FiPlusSquare, FiX } from 'react-icons/fi';
 import Modal from '../components/Shared/Modal';
 import ConfirmModal from '../components/Shared/ConfirmModal';
+import { getFullUrl } from '../utils/urlHelper';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -217,8 +218,12 @@ export default function Companies() {
                         className="flex items-center gap-3 cursor-pointer group/item"
                         onClick={() => navigate(`/dashboard/companies/${c._id}`)}
                       >
-                        <div className="w-8 h-8 rounded-md bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-[12px] group-hover/item:bg-blue-600 group-hover/item:text-white transition-standard">
-                          {c.companyName[0]}
+                        <div className="w-8 h-8 rounded-md bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-[12px] group-hover/item:bg-blue-600 group-hover/item:text-white transition-standard overflow-hidden shrink-0">
+                          {c.logo ? (
+                            <img src={getFullUrl(c.logo, API_BASE_URL)} alt="" className="w-full h-full object-contain" />
+                          ) : (
+                            c.companyName[0]
+                          )}
                         </div>
                         <div>
                           <p className="font-bold text-slate-700 text-[13px] tracking-tight group-hover/item:text-blue-600">{c.companyName}</p>
