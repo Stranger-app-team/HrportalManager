@@ -35,7 +35,9 @@ export default function LeaveApproval() {
    const [filters, setFilters] = useState({
       companyId: localStorage.getItem("selectedCompanyId") || "",
       status: "",
-      search: ""
+      search: "",
+      startDate: "",
+      endDate: ""
    });
 
    const [stats, setStats] = useState({
@@ -43,6 +45,21 @@ export default function LeaveApproval() {
       approved: 0,
       rejected: 0,
       ratio: 0
+   });
+
+   const filteredLeaves = leaves.filter(l => {
+      const matchesSearch = l.name?.toLowerCase().includes(filters.search.toLowerCase());
+      
+      const leaveStart = new Date(l.startDate).setHours(0, 0, 0, 0);
+      const leaveEnd = new Date(l.endDate).setHours(23, 59, 59, 999);
+      
+      const filterStart = filters.startDate ? new Date(filters.startDate).setHours(0, 0, 0, 0) : null;
+      const filterEnd = filters.endDate ? new Date(filters.endDate).setHours(23, 59, 59, 999) : null;
+      
+      const matchesStart = !filterStart || leaveEnd >= filterStart;
+      const matchesEnd = !filterEnd || leaveStart <= filterEnd;
+      
+      return matchesSearch && matchesStart && matchesEnd;
    });
 
    useEffect(() => {
@@ -163,12 +180,12 @@ export default function LeaveApproval() {
                      Leave Records
                   </h3>
                   <div className="px-2 py-0.5 bg-slate-100 rounded text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                     {leaves.length}
+                     {filteredLeaves.length}
                   </div>
                </div>
 
                <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
-                  <div className="flex bg-slate-50 border border-slate-200 p-0.5 rounded">
+                  <div className="flex bg-slate-50 border border-slate-200 p-0.5 rounded h-8 items-center">
                      <CustomSelector
                         icon={<Building size={11} />}
                         value={filters.companyId}
@@ -191,12 +208,48 @@ export default function LeaveApproval() {
                      />
                   </div>
 
+                  <div className="flex items-center bg-slate-50 border border-slate-200 p-0.5 rounded h-8">
+                     <div className="flex items-center px-1.5 gap-1 text-slate-400">
+                        <FiCalendar size={11} />
+                        <span className="text-[9px] font-bold uppercase tracking-wider">From:</span>
+                     </div>
+                     <input 
+                       type="date" 
+                       className="bg-transparent text-[10px] font-bold text-slate-600 outline-none cursor-pointer pr-1 h-7 py-0"
+                       value={filters.startDate}
+                       onChange={e => setFilters({...filters, startDate: e.target.value})}
+                     />
+                     <div className="w-px h-3 bg-slate-200 self-center mx-1" />
+                     <div className="flex items-center px-1.5 gap-1 text-slate-400">
+                        <FiCalendar size={11} />
+                        <span className="text-[9px] font-bold uppercase tracking-wider">To:</span>
+                     </div>
+                     <input 
+                       type="date" 
+                       className="bg-transparent text-[10px] font-bold text-slate-600 outline-none cursor-pointer pr-1 h-7 py-0"
+                       value={filters.endDate}
+                       onChange={e => setFilters({...filters, endDate: e.target.value})}
+                     />
+                     {(filters.startDate || filters.endDate) && (
+                        <>
+                           <div className="w-px h-3 bg-slate-200 self-center mx-1" />
+                           <button 
+                              onClick={() => setFilters({...filters, startDate: "", endDate: ""})}
+                              className="p-1 hover:text-rose-500 text-slate-400 transition-colors"
+                              title="Clear date filter"
+                           >
+                              <FiX size={10} />
+                           </button>
+                        </>
+                     )}
+                  </div>
+
                   <div className="relative group max-w-xs flex-1">
                      <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={13} />
                      <input
                         type="text"
                         placeholder="Search..."
-                        className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded text-[11px] outline-none font-bold focus:bg-white focus:border-blue-500/20 transition-all text-slate-600"
+                        className="w-full pl-9 pr-3 h-8 bg-slate-50 border border-slate-200 rounded text-[11px] outline-none font-bold focus:bg-white focus:border-blue-500/20 transition-all text-slate-600"
                         value={filters.search}
                         onChange={e => setFilters({ ...filters, search: e.target.value })}
                      />
@@ -215,7 +268,7 @@ export default function LeaveApproval() {
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50 font-bold">
-                     {leaves.filter(l => l.name?.toLowerCase().includes(filters.search.toLowerCase())).map((leave) => (
+                     {filteredLeaves.map((leave) => (
                         <tr key={leave._id} className="hover:bg-slate-50 transition-standard group">
                            <td className="px-6 py-2.5">
                               <div className="flex items-center gap-3">
@@ -318,7 +371,7 @@ function CustomSelector({ icon, value, options, onChange, minWidth = "auto" }) {
       <div className="relative" ref={dropRef} style={{ minWidth }}>
          <button
             onClick={() => setIsOpen(!isOpen)}
-            className={`w-full flex items-center justify-between gap-3 px-3.5 py-1.5 rounded-md transition-all duration-300 hover:bg-slate-50`}
+            className={`w-full flex items-center justify-between gap-3 px-3.5 h-7 rounded transition-all duration-300 hover:bg-slate-50`}
          >
             <div className="flex items-center gap-2 overflow-hidden">
                {icon && <span className="text-slate-400 shrink-0">{icon}</span>}
