@@ -5,7 +5,7 @@ import { API_BASE_URL } from "../config/api";
 import Modal from "../components/Shared/Modal";
 import ConfirmModal from "../components/Shared/ConfirmModal";
 import CustomSelector from "../components/Shared/CustomSelector";
-import { FiEye, FiEdit2, FiTrash2, FiSearch, FiUserMinus, FiGift, FiPlus, FiArrowDown, FiArrowUp, FiUsers, FiCalendar,FiLayers, FiClock, FiUserPlus, FiBox ,FiDownload} from "react-icons/fi";
+import { FiEye, FiEdit2, FiTrash2, FiSearch, FiUserMinus, FiGift, FiPlus, FiArrowDown, FiArrowUp, FiUsers, FiCalendar,FiLayers, FiClock, FiUserPlus, FiBox ,FiDownload, FiMoreVertical} from "react-icons/fi";
 import AssetAssignmentModal from "../components/Employees/AssetAssignmentModal";
 import EmployeeStatusModal from "../components/Employees/EmployeeStatusModal";
 import EmployeeLifecycleModal from "../components/Employees/EmployeeLifecycleModal";
@@ -46,6 +46,7 @@ export default function Employees() {
   
   const [showAssetModal, setShowAssetModal] = useState(false);
   const [selectedEmpForAsset, setSelectedEmpForAsset] = useState(null);
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
 
   const [stats, setStats] = useState({
     totalEmployees: 0,
@@ -217,6 +218,99 @@ export default function Employees() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (!event.target.closest(".action-dropdown-container")) {
+        setActiveDropdownId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
+  const getRoleBadge = (role) => {
+    const r = String(role || "employee").toLowerCase();
+    switch (r) {
+      case "hr":
+        return <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-[800] border border-purple-100/50 text-[10px] uppercase tracking-wide">HR</span>;
+      case "manager":
+        return <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 font-[800] border border-amber-100/50 text-[10px] uppercase tracking-wide">Manager</span>;
+      case "accounts":
+        return <span className="px-2 py-0.5 rounded-full bg-teal-50 text-teal-600 font-[800] border border-teal-100/50 text-[10px] uppercase tracking-wide">Accounts</span>;
+      case "admin":
+        return <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 font-[800] border border-rose-100/50 text-[10px] uppercase tracking-wide">Admin</span>;
+      default:
+        return <span className="px-2 py-0.5 rounded-full bg-slate-50 text-slate-600 font-[800] border border-slate-100/50 text-[10px] uppercase tracking-wide">Employee</span>;
+    }
+  };
+
+  const getEmployeeActions = (emp) => {
+    const list = [];
+    
+    // 1. Edit (Only for non-inactive, and userRole !== 'manager')
+    if (String(emp.status).toLowerCase() !== "inactive") {
+      if (userRole !== "manager") {
+        list.push({
+          label: "Edit Details",
+          icon: <FiEdit2 size={13} />,
+          onClick: () => navigate(`/dashboard/edit-employee/${emp.employeeId}`),
+          className: "text-slate-600 hover:text-amber-600 hover:bg-amber-50"
+        });
+      }
+    } else {
+      // Delete (Only for inactive, and userRole !== 'manager')
+      if (userRole !== "manager") {
+        list.push({
+          label: "Delete",
+          icon: <FiTrash2 size={13} />,
+          onClick: () => handleDelete(emp.employeeId),
+          className: "text-rose-600 hover:bg-rose-50"
+        });
+      }
+    }
+
+    // 2. Manage Assets (userRole !== 'manager')
+    if (userRole !== "manager") {
+      list.push({
+        label: "Manage Assets",
+        icon: <FiBox size={13} />,
+        onClick: () => {
+          setSelectedEmpForAsset(emp);
+          setShowAssetModal(true);
+        },
+        className: "text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+      });
+    }
+
+    // 3. Lifecycle History (always shown in manager portal)
+    list.push({
+      label: "Lifecycle History",
+      icon: <FiClock size={13} />,
+      onClick: () => {
+        setSelectedEmpForLifecycle(emp);
+        setShowLifecycleModal(true);
+      },
+      className: "text-slate-600 hover:text-indigo-600 hover:bg-indigo-50"
+    });
+
+    // 4. Update Status (userRole !== 'manager')
+    if (userRole !== "manager") {
+      list.push({
+        label: "Update Status",
+        icon: <FiUserMinus size={13} />,
+        onClick: () => {
+          setSelectedEmpForStatus(emp);
+          setShowStatusModal(true);
+        },
+        className: "text-slate-600 hover:text-rose-500 hover:bg-rose-50"
+      });
+    }
+
+    return list;
+  };
  
   // ✅ CALCULATE STATS FROM EMPLOYEE LIST
   useEffect(() => {
@@ -653,13 +747,15 @@ export default function Employees() {
       </div>
 
       {/* TABLE - Professional & Compact with Attendance-style Shadow/Radius */}
-      <div className="bg-white rounded-lg border border-slate-100 overflow-hidden shadow-lg shadow-slate-200/40 mt-1">
-        <div className="overflow-x-auto custom-scrollbar">
+      <div className={`bg-white rounded-lg border border-slate-100 shadow-lg shadow-slate-200/40 mt-1 ${activeDropdownId ? 'overflow-visible' : 'overflow-hidden'}`}>
+        <div className={`custom-scrollbar ${activeDropdownId ? 'overflow-visible' : 'overflow-x-auto'}`}>
           <table className="w-full border-collapse">
             <thead className="sticky top-0 z-10 bg-slate-50">
               <tr className="text-left text-slate-500 border-b border-slate-200">
                 <th className="py-3 px-4 text-[11px] font-bold uppercase tracking-wider">Full name</th>
                 <th className="py-3 px-4 text-[11px] font-bold uppercase tracking-wider">Employee ID</th>
+                <th className="py-3 px-4 text-[11px] font-bold uppercase tracking-wider">Role</th>
+                <th className="py-3 px-4 text-[11px] font-bold uppercase tracking-wider">Email</th>
                 <th className="py-3 px-4 text-[11px] font-bold uppercase tracking-wider">Department</th>
                 <th className="py-3 px-4 text-[11px] font-bold uppercase tracking-wider">Job Title</th>
                 <th className="py-3 px-4 text-[11px] font-bold uppercase tracking-wider">Type</th>
@@ -710,6 +806,16 @@ export default function Employees() {
 
                   {/* Employee ID */}
                   <td className="py-4 px-4 text-[12px] font-bold text-gray-500">{emp.employeeId}</td>
+
+                  {/* Role */}
+                  <td className="py-4 px-4 text-[12px] font-medium text-gray-700">
+                    {getRoleBadge(emp.user?.userType)}
+                  </td>
+
+                  {/* Email */}
+                  <td className="py-4 px-4 text-[12px] font-medium text-gray-600">
+                    {emp.personalEmail || emp.user?.email || emp.email || "N/A"}
+                  </td>
 
                   {/* Department */}
                   <td className="py-4 px-4 text-[12px] font-medium text-gray-700">
@@ -764,85 +870,43 @@ export default function Employees() {
                   </td>
 
                   {/* Action */}
-                  <td className="py-4 px-4">
-                    <div className="flex justify-center items-center gap-1.5">
-
-                      {/* 1. Edit (Only for non-inactive) */}
-                      {String(emp.status).toLowerCase() !== "inactive" ? (
-                        userRole !== "manager" && (
-                        <button 
-                          onClick={() => navigate(`/dashboard/edit-employee/${emp.employeeId}`)}
-                          className="p-2 rounded-full text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition-all duration-300"
-                          title="Edit Details"
-                        >
-                          <FiEdit2 size={16} />
-                        </button>
-                        )
-                      ) : (
-                        /* Delete (Only for inactive) */
-                        userRole !== "manager" && (
-                        <button 
-                          onClick={() => handleDelete(emp.employeeId)}
-                          className="p-2 rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all duration-300"
-                          title="Delete Employee"
-                        >
-                          <FiTrash2 size={16} />
-                        </button>
-                        )
-                      )}
-
-                      {/* 2. Attendance History (Moved to Profile Page) */}
-                      {/* <button 
-                        onClick={() => {
-                          setSelectedEmployeeForAttendance(emp.user?._id);
-                          setShowAttendanceModal(true);
+                  <td className="py-4 px-4 text-center">
+                    <div className="relative inline-block text-left action-dropdown-container">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveDropdownId(activeDropdownId === emp.employeeId ? null : emp.employeeId);
                         }}
-                        className="p-2 rounded-full text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-300"
-                        title="Attendance History"
+                        className="p-1.5 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-all duration-300"
+                        title="Actions"
                       >
-                        <FiCalendar size={16} />
-                      </button> */}
-
-                      {/* 3. Assets */}
-                      {userRole !== "manager" && (
-                      <button 
-                        onClick={() => {
-                          setSelectedEmpForAsset(emp);
-                          setShowAssetModal(true);
-                        }}
-                        className="p-2 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300"
-                        title="Manage Assets"
-                      >
-                        <FiBox size={16} />
-                      </button>
-                      )}
-
-                      {/* 4. Lifecycle History */}
-                      <button 
-                        onClick={() => {
-                          setSelectedEmpForLifecycle(emp);
-                          setShowLifecycleModal(true);
-                        }}
-                        className="p-2 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300"
-                        title="Lifecycle History"
-                      >
-                        <FiClock size={16} />
+                        <FiMoreVertical size={16} />
                       </button>
 
-                      {/* 5. Update Status */}
-                      {userRole !== "manager" && (
-                        <button
-                          onClick={() => {
-                            setSelectedEmpForStatus(emp);
-                            setShowStatusModal(true);
-                          }}
-                          className="p-2 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all duration-300"
-                          title="Update Status"
-                        >
-                          <FiUserMinus size={16} />
-                        </button>
+                      {activeDropdownId === emp.employeeId && (
+                        <div className={`absolute right-0 w-48 bg-white border border-slate-100 rounded-xl shadow-xl z-[150] py-1 animate-in fade-in zoom-in-95 duration-200 ${idx >= currentRecords.length - 2 && currentRecords.length > 2 ? 'bottom-full mb-1 origin-bottom' : 'top-full mt-1 origin-top'}`}>
+                          {getEmployeeActions(emp).length === 0 ? (
+                            <p className="px-4 py-2 text-[10px] text-slate-300 font-bold uppercase tracking-widest text-center italic">
+                              No actions
+                            </p>
+                          ) : (
+                            getEmployeeActions(emp).map((act, i) => (
+                              <button
+                                key={i}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdownId(null);
+                                  act.onClick();
+                                }}
+                                className={`w-full text-left px-4 py-2 text-[11px] font-bold tracking-tight transition-colors flex items-center gap-2.5 ${act.className}`}
+                              >
+                                {act.icon}
+                                <span>{act.label}</span>
+                              </button>
+                            ))
+                          )}
+                        </div>
                       )}
-
                     </div>
                   </td>
                 </tr>
