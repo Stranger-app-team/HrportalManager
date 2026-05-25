@@ -834,39 +834,38 @@ export default function Employees() {
 
                   {/* Status */}
                   <td className="py-4 px-4">
-                    <span className={`font-bold text-[11px] uppercase tracking-wider ${
-                      String(emp.status).toLowerCase() === "active" ? "text-emerald-500" :
-                      String(emp.status).toLowerCase() === "resigned" ? "text-amber-500" :
-                      String(emp.status).toLowerCase() === "inactive" ? "text-slate-400" :
-                      "text-rose-500"
-                    }`}>
-                      {String(emp.status || "Active").replace('_', ' ')}
-                    </span>
-                    
-                    {String(emp.status).toLowerCase() === "resigned" && emp.noticeStartDate && emp.lastWorkingDate && (
-                      <div className="mt-1.5">
-                        {(() => {
+                    <div className="flex items-center gap-2">
+                      <span className={`font-bold text-[11px] uppercase tracking-wider shrink-0 ${
+                        String(emp.status).toLowerCase() === "active" ? "text-emerald-500" :
+                        String(emp.status).toLowerCase() === "resigned" ? "text-amber-500" :
+                        String(emp.status).toLowerCase() === "inactive" ? "text-slate-400" :
+                        "text-rose-500"
+                      }`}>
+                        {String(emp.status || "Active").replace('_', ' ')}
+                      </span>
+                      
+                      {String(emp.status).toLowerCase() === "resigned" && emp.noticeStartDate && emp.lastWorkingDate && (
+                        (() => {
                           const { totalDays, servedDays, leftDays, progress } = getNoticeProgress(emp);
-                          const capped = servedDays;
-                          const remaining = leftDays;
-
                           return (
-                            <div className="flex flex-col gap-1 w-24" title={`${capped} days served, ${remaining} days remaining`}>
-                              <div className="flex justify-between text-[8px] font-black text-slate-400 uppercase tracking-widest">
-                                <span>{capped}d served</span>
-                                <span>{remaining}d left</span>
-                              </div>
-                              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden ring-1 ring-slate-200/50">
+                            <div 
+                              className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-100 rounded-md py-0.5 px-1.5"
+                              title={`${servedDays} days served, ${leftDays} days remaining of notice period`}
+                            >
+                              <div className="w-8 h-1 bg-slate-200/60 rounded-full overflow-hidden">
                                 <div 
                                   className="h-full bg-amber-400 rounded-full transition-all" 
                                   style={{ width: `${progress}%` }}
                                 ></div>
                               </div>
+                              <span className="text-[8px] font-extrabold text-slate-500 uppercase tracking-tight whitespace-nowrap">
+                                {servedDays}/{totalDays}d
+                              </span>
                             </div>
                           );
-                        })()}
-                      </div>
-                    )}
+                        })()
+                      )}
+                    </div>
                   </td>
 
                   {/* Action */}
