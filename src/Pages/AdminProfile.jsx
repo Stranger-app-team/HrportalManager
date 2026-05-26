@@ -434,7 +434,7 @@ export default function AdminProfile() {
 
                             <Input label="Email Address" name="email" type="email" />
 
-                            {emailVerified ? (
+                            {/* {emailVerified ? (
                                 <span className="absolute right-2 top-6 bg-blue-100 text-blue-600 text-[10px] px-2 py-[2px] rounded">
                                     Verified
                                 </span>
@@ -445,7 +445,7 @@ export default function AdminProfile() {
                                 >
                                     Verify
                                 </button>
-                            )}
+                            )} */}
 
                         </div>
 
