@@ -57,6 +57,7 @@ export default function AdminProfile() {
                 let endpoint = "";
                 if (storedUser.userType === "hr") endpoint = "/hr/profile";
                 else if (storedUser.userType === "manager") endpoint = "/manager/profile";
+                else if (storedUser.userType === "accounts") endpoint = "/employee/profile";
                 else {
                     // Fallback to localStorage for admin or others
                     const username = localStorage.getItem("username");
@@ -73,11 +74,12 @@ export default function AdminProfile() {
                     return;
                 }
 
+                console.log(`[${storedUser.userType.toUpperCase()} PORTAL] FETCHING PROFILE FROM ENDPOINT:`, endpoint);
                 const res = await fetch(`${API_BASE_URL}${endpoint}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const data = await res.json();
-                console.log("USER PROFILE RESPONSE (PROFILE PAGE):", data);
+                console.log(`[${storedUser.userType.toUpperCase()} PORTAL] USER PROFILE RESPONSE (PROFILE PAGE):`, data);
 
                 if (data.success) {
                     const profileData = data.data;
@@ -94,7 +96,9 @@ export default function AdminProfile() {
                         lastName: lastName || "",
                         email: userData?.email || "",
                         phone: profileData.phone || "",
-                        location: profileData.location || "",
+                        location: typeof profileData.location === 'object' && profileData.location ? 
+                            [profileData.location.city, profileData.location.addressLine].filter(Boolean).join(", ") : 
+                            (profileData.location || ""),
                         bio: profileData.bio || "",
                         dob: profileData.dob ? profileData.dob.split("T")[0] : "",
                         specialization: profileData.specialization || "",
