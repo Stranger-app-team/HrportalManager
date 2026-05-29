@@ -36,7 +36,7 @@ Sincerely,`;
 function plainTextToHtml(text) {
   if (!text) return '';
   // If it already looks like HTML, return as-is
-  if (text.trim().startsWith('<')) return text;
+  if (text.trim().startsWith('<') && text.includes('</')) return text;
   return text
     .split(/\n\n+/)
     .map(block => {
@@ -46,9 +46,37 @@ function plainTextToHtml(text) {
       if (/^[A-Z0-9][A-Z0-9\s&.,-]{3,}$/.test(trimmed) || /^\d+\.\s/.test(trimmed)) {
         return `<h3>${trimmed}</h3>`;
       }
-      // Wrap each line inside a paragraph, preserve single newlines as <br>
-      const inner = trimmed.split('\n').join('<br />');
-      return `<p>${inner}</p>`;
+      let lines = trimmed.split('\n');
+      let htmlLines = [];
+      let inList = false;
+      let nonListBuffer = [];
+      
+      const flushNonList = () => {
+         if (nonListBuffer.length > 0) {
+            htmlLines.push(`<p>${nonListBuffer.join('<br />')}</p>`);
+            nonListBuffer = [];
+         }
+      };
+      
+      for (let line of lines) {
+        let t = line.trim();
+        if (t.startsWith('- ') || t.startsWith('• ') || t.startsWith('* ')) {
+          flushNonList();
+          if (!inList) { htmlLines.push('<ul style="margin: 0 0 12px 0; padding-left: 20px; list-style-type: disc;">'); inList = true; }
+          htmlLines.push(`<li style="margin-bottom: 4px;">${t.substring(2)}</li>`);
+        } else {
+          if (inList) { htmlLines.push('</ul>'); inList = false; }
+          nonListBuffer.push(line);
+        }
+      }
+      flushNonList();
+      if (inList) htmlLines.push('</ul>');
+      
+      let inner = htmlLines.join('\n');
+      inner = inner.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      inner = inner.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      inner = inner.replace(/__(.*?)__/g, '<u>$1</u>');
+      return inner;
     })
     .join('\n');
 }
@@ -64,8 +92,15 @@ function htmlToPlainText(html) {
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n\n')
     .replace(/<p[^>]*>/gi, '')
-    .replace(/<strong>/gi, '').replace(/<\/strong>/gi, '')
-    .replace(/<em>/gi, '').replace(/<\/em>/gi, '')
+    .replace(/<ul[^>]*>/gi, '')
+    .replace(/<\/ul>/gi, '\n\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<strong>/gi, '**').replace(/<\/strong>/gi, '**')
+    .replace(/<b>/gi, '**').replace(/<\/b>/gi, '**')
+    .replace(/<em>/gi, '*').replace(/<\/em>/gi, '*')
+    .replace(/<i>/gi, '*').replace(/<\/i>/gi, '*')
+    .replace(/<u>/gi, '__').replace(/<\/u>/gi, '__')
     .replace(/<[^>]+>/g, '')
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
@@ -351,10 +386,19 @@ function extractBodyForEditor(fullHtml) {
     const sourceContent = doc.querySelector('#source-content');
 
     if (sourceContent) {
+      const issueDateNode = sourceContent.querySelector('.issue-date');
+      if (issueDateNode) issueDateNode.remove();
+      const sigSectionNode = sourceContent.querySelector('.sig-section');
+      if (sigSectionNode) sigSectionNode.remove();
       return htmlToPlainText(sourceContent.innerHTML);
     }
 
     // Fallback to body
+    const fallbackDateNode = doc.querySelector('.issue-date');
+    if (fallbackDateNode) fallbackDateNode.remove();
+    const fallbackSigNode = doc.querySelector('.sig-section');
+    if (fallbackSigNode) fallbackSigNode.remove();
+    
     return htmlToPlainText(doc.body.innerHTML);
 
   } catch (err) {
