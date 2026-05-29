@@ -112,7 +112,7 @@ function compilePreview(bodyPlain, companyObj, selectedSig, formVals = {}, pdfBl
         <div class="sig-line">Authorized Signatory</div>
       </div>`
     : `<div class="sig-section" style="opacity:0.4">
-        <div class="sig-placeholder">Signature Placeholder</div>
+        <div class="sig-placeholder"></div>
         <div class="sig-line">Authorized Signatory</div>
       </div>`;
 
