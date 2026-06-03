@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { X, Camera, Upload, ChevronDown, Eye, EyeOff, Save, Info, Briefcase, MapPin, Lock, CreditCard, Paperclip, Monitor, Laptop, Plus } from 'lucide-react';
 import CreateDepartmentModal from '../components/Shared/CreateDepartmentModal';
+import EmployeeDocuments from '../components/Employees/EmployeeDocuments';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -55,7 +56,7 @@ export default function AddEmployee() {
 
   const [selectedAssets, setSelectedAssets] = useState([]);
   const [profilePhoto, setProfilePhoto] = useState(null);
-  const [uploadedFiles, setUploadedFiles] = useState({ aadharCard: null, panCard: null, appointmentLetter: null, resume: null });
+  const [localDocuments, setLocalDocuments] = useState([]);
 
   const location = useLocation();
 
@@ -222,8 +223,12 @@ export default function AddEmployee() {
       }));
 
       if (profilePhoto) fData.append("profilePhoto", profilePhoto);
-      Object.keys(uploadedFiles).forEach(key => {
-        if (uploadedFiles[key]) fData.append(key, uploadedFiles[key]);
+      
+      // Append local documents correctly
+      localDocuments.forEach(doc => {
+         if (doc.file) {
+            fData.append(doc.documentType, doc.file);
+         }
       });
 
       console.log("--- FINAL PAYLOAD BEING SENT TO /employee ---", Object.fromEntries(fData.entries()));
@@ -507,32 +512,15 @@ export default function AddEmployee() {
           </div>
 
           {/* DOCUMENTS SECTION */}
-          <div className="bg-white p-6 rounded-lg border border-slate-100 shadow-lg shadow-slate-200/40 mb-12">
-             <SecHeader icon={Paperclip} title="Documents Upload" subtitle="Mandatory attachments" />
-             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
-                {[
-                  { key: 'aadharCard', label: 'Aadhar Card' },
-                  { key: 'panCard', label: 'PAN Card' },
-                  { key: 'appointmentLetter', label: 'Offer Letter' },
-                  { key: 'resume', label: 'Resume' }
-                ].map(doc => (
-                   <label key={doc.key} className="relative cursor-pointer group">
-                      <div className={`p-4 rounded-xl border border-dashed transition-all flex flex-col items-center gap-2
-                         ${uploadedFiles[doc.key] ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200 group-hover:bg-white group-hover:border-blue-200 group-hover:shadow-md'}`}>
-                         <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors
-                            ${uploadedFiles[doc.key] ? 'bg-emerald-500 text-white' : 'bg-white text-gray-400 border border-slate-100 group-hover:bg-blue-600 group-hover:text-white'}`}>
-                            <Upload size={16} />
-                         </div>
-                         <p className="text-[10px] font-black text-slate-700 uppercase">{doc.label}</p>
-                         <p className="text-[8px] text-slate-400 font-bold italic truncate max-w-full px-2">
-                            {uploadedFiles[doc.key] ? `✓ ${uploadedFiles[doc.key].name}` : "SELECT FILE"}
-                         </p>
-                      </div>
-                      <input type="file" className="hidden" onChange={(e) => setUploadedFiles({...uploadedFiles, [doc.key]: e.target.files[0]})} />
-                   </label>
-                ))}
-             </div>
-          </div>
+          <EmployeeDocuments 
+            employeeId={null} 
+            documents={[]} 
+            onRefresh={() => {}} 
+            isHr={true} 
+            mode="add" 
+            localDocuments={localDocuments} 
+            setLocalDocuments={setLocalDocuments} 
+          />
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { X, ChevronDown, Eye, EyeOff, Info, Briefcase, MapPin, Lock, CreditCard, Paperclip, Monitor, Laptop, CheckCircle, Smartphone, Speaker, Keyboard, Mouse, Upload, Calendar, Clock, User } from "lucide-react";
 import { getFullUrl } from '../utils/urlHelper';
 import AttendanceHistoryModal from "../components/Employees/AttendanceHistoryModal";
+import EmployeeDocuments from "../components/Employees/EmployeeDocuments";
 
 const SecHeader = ({ icon: Icon, title, subtitle }) => (
   <div className="flex items-center gap-4 mb-6">
@@ -297,29 +298,13 @@ export default function Profile() {
           )}
 
           {/* DOCUMENTS SECTION */}
-          <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm mb-12">
-             <SecHeader icon={Paperclip} title="Documents" subtitle="Uploaded attachments" />
-             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {[
-                  { key: 'aadharCard', label: 'Aadhar Card', file: employee.aadharCard },
-                  { key: 'panCard', label: 'PAN Card', file: employee.panCard },
-                  { key: 'appointmentLetter', label: 'Offer Letter', file: employee.appointmentLetter },
-                  { key: 'resume', label: 'Resume', file: employee.resume }
-                ].map(doc => (
-                   <div key={doc.key} className="p-6 rounded-[24px] border border-gray-100 bg-gray-50 flex flex-col items-center gap-2 hover:bg-white hover:shadow-lg transition-all">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${doc.file ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-300'}`}>
-                         <Upload size={18} />
-                      </div>
-                      <p className="text-[10px] font-bold text-gray-700 uppercase">{doc.label}</p>
-                      {doc.file ? (
-                        <a href={getFullUrl(doc.file, API_BASE_URL)} target="_blank" rel="noreferrer" className="text-[10px] text-blue-600 font-bold hover:underline">View Document</a>
-                      ) : (
-                        <p className="text-[9px] text-gray-400 italic">Not Uploaded</p>
-                      )}
-                   </div>
-                ))}
-             </div>
-          </div>
+          <EmployeeDocuments 
+            employeeId={employeeId} 
+            documents={employee.documents || []} 
+            onRefresh={fetchInitialData} 
+            isHr={false} 
+            mode="readOnly" 
+          />
         </div>
       </div>
 

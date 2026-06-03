@@ -107,6 +107,33 @@ export default function NotificationBell() {
     return date.toLocaleDateString();
   };
 
+  const cleanMessage = (n) => {
+    let msg = n.message || "";
+    let parts = msg.split(". Changes:");
+    if (parts.length > 1) msg = parts[0] + ".";
+    
+    parts = msg.split(" bank details: ");
+    if (parts.length > 1) msg = parts[0] + " bank details.";
+
+    if (n.changes && n.changes.length > 0) {
+      if (!msg.endsWith(':') && !msg.endsWith('.')) {
+        msg += ':';
+      } else if (msg.endsWith('.')) {
+        msg = msg.slice(0, -1) + ':';
+      }
+      
+      const changeStrings = n.changes.map(c => {
+        const oldVal = typeof c.oldValue === "object" ? "..." : String(c.oldValue || 'None');
+        const newVal = typeof c.newValue === "object" ? "..." : String(c.newValue || 'None');
+        return `${c.field} changed from '${oldVal}' to '${newVal}'`;
+      });
+      
+      msg += ' ' + changeStrings.join(', ') + '.';
+    }
+
+    return msg;
+  };
+
   const unreadCount = notifications.length;
 
   return (
@@ -154,7 +181,7 @@ export default function NotificationBell() {
                   </div>
                   <div className="flex-1 min-w-0 pr-4">
                     <p className="text-[11.5px] font-black text-slate-700 leading-tight uppercase truncate" title={n.title}>{n.title}</p>
-                    <p className="text-[11px] text-slate-500 mt-1 leading-snug line-clamp-2" title={n.message}>{n.message}</p>
+                    <p className="text-[11px] text-slate-500 mt-1 leading-snug line-clamp-2" title={cleanMessage(n)}>{cleanMessage(n)}</p>
                     <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wide block mt-1.5">{getRelativeTime(n.createdAt || new Date())}</span>
                   </div>
                   <button

@@ -39,7 +39,17 @@ export const SocketProvider = ({ children }) => {
                 draggable: true,
                 theme: "light",
             });
+            // We can dispatch a custom event so other components (like NotificationBell) can listen without polling
             window.dispatchEvent(new CustomEvent('new_notification', { detail: notification }));
+        });
+
+        // Broadcast events for data synchronization
+        newSocket.on('REFRESH_LEAVES', (data) => {
+            window.dispatchEvent(new CustomEvent('REFRESH_LEAVES', { detail: data }));
+        });
+        
+        newSocket.on('REFRESH_EMPLOYEES', (data) => {
+            window.dispatchEvent(new CustomEvent('REFRESH_EMPLOYEES', { detail: data }));
         });
 
         setSocket(newSocket);

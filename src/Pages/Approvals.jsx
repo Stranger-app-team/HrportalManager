@@ -128,6 +128,14 @@ export default function LeaveApproval() {
       fetchLeaves();
    }, [fetchLeaves]);
 
+   useEffect(() => {
+      const handleRefresh = () => {
+         fetchLeaves();
+      };
+      window.addEventListener('REFRESH_LEAVES', handleRefresh);
+      return () => window.removeEventListener('REFRESH_LEAVES', handleRefresh);
+   }, [fetchLeaves]);
+
    const handleStatusUpdate = async (leaveId, status) => {
       setActionLoading(leaveId);
       try {

@@ -89,13 +89,29 @@ export default function Notifications() {
     return `${d.toLocaleDateString()} at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
 
-  const cleanMessage = (msg) => {
-    if (!msg) return "";
+  const cleanMessage = (n) => {
+    let msg = n.message || "";
     let parts = msg.split(". Changes:");
-    if (parts.length > 1) return parts[0] + ".";
+    if (parts.length > 1) msg = parts[0] + ".";
     
     parts = msg.split(" bank details: ");
-    if (parts.length > 1) return parts[0] + " bank details.";
+    if (parts.length > 1) msg = parts[0] + " bank details.";
+
+    if (n.changes && n.changes.length > 0) {
+      if (!msg.endsWith(':') && !msg.endsWith('.')) {
+        msg += ':';
+      } else if (msg.endsWith('.')) {
+        msg = msg.slice(0, -1) + ':';
+      }
+      
+      const changeStrings = n.changes.map(c => {
+        const oldVal = typeof c.oldValue === "object" ? "..." : String(c.oldValue || 'None');
+        const newVal = typeof c.newValue === "object" ? "..." : String(c.newValue || 'None');
+        return `${c.field} changed from '${oldVal}' to '${newVal}'`;
+      });
+      
+      msg += ' ' + changeStrings.join(', ') + '.';
+    }
 
     return msg;
   };
@@ -173,51 +189,10 @@ export default function Notifications() {
                       <div className="flex justify-between items-start gap-4">
                         <div>
                           <p className="text-sm font-semibold text-gray-900">{n.title}</p>
-                          <p className="text-sm text-gray-600 mt-1">{cleanMessage(n.message)}</p>
+                          <p className="text-sm text-gray-600 mt-1">{cleanMessage(n)}</p>
                         </div>
                         <span className="text-xs text-gray-550 whitespace-nowrap bg-gray-100 px-2 py-0.5 rounded font-medium">{formatDate(n.createdAt)}</span>
                       </div>
-
-                      {n.changes && n.changes.length > 0 && (
-                        <div className="mt-2.5">
-                          <button
-                            onClick={() => toggleExpand(n._id)}
-                            className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
-                          >
-                            {expandedIds[n._id] ? (
-                              <>
-                                Hide Details
-                                <FiChevronUp size={14} />
-                              </>
-                            ) : (
-                              <>
-                                View Changes
-                                <FiChevronDown size={14} />
-                              </>
-                            )}
-                          </button>
-
-                          {expandedIds[n._id] && (
-                            <div className="mt-2.5 bg-gray-50 rounded-xl p-3.5 border border-gray-100/80 animate-in fade-in slide-in-from-top-2 duration-200">
-                              <p className="text-[11px] font-black text-gray-400 uppercase tracking-wider mb-2.5">Modified Fields</p>
-                              <div className="space-y-2">
-                                {n.changes.map((c, idx) => (
-                                  <div key={idx} className="flex flex-wrap items-center gap-1.5 text-xs text-gray-700">
-                                    <span className="font-semibold text-gray-800 capitalize">{c.field}:</span>
-                                    <span className="text-gray-400 line-through truncate max-w-[150px]">
-                                      {typeof c.oldValue === "object" ? JSON.stringify(c.oldValue) : String(c.oldValue || 'None')}
-                                    </span>
-                                    <span className="text-gray-300">→</span>
-                                    <span className="text-indigo-900 font-semibold truncate max-w-[150px]">
-                                      {typeof c.newValue === "object" ? JSON.stringify(c.newValue) : String(c.newValue || 'None')}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
 
                       <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
                         {n.employeeId ? (

@@ -366,6 +366,15 @@ export default function Employees() {
     fetchUpcomingBirthdays();
   }, [selectedType]);
 
+  useEffect(() => {
+    const handleRefresh = () => {
+      fetchEmployees();
+      fetchStats();
+    };
+    window.addEventListener('REFRESH_EMPLOYEES', handleRefresh);
+    return () => window.removeEventListener('REFRESH_EMPLOYEES', handleRefresh);
+  }, []);
+
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem("token");

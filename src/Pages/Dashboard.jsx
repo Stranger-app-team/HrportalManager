@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bar, Line } from "react-chartjs-2";
 import { API_BASE_URL } from "../config/api";
-import { FiArrowDown, FiArrowUp, FiSettings, FiUser, FiLogOut, FiCalendar, FiActivity, FiTag, FiClock, FiCheckCircle, FiAlertCircle, FiChevronRight, FiChevronLeft, FiInfo } from "react-icons/fi";
+import { FiArrowDown, FiArrowUp, FiSettings, FiUser, FiLogOut, FiCalendar, FiActivity, FiTag, FiClock, FiCheckCircle, FiAlertCircle, FiChevronRight, FiChevronLeft, FiInfo, FiEye, FiEyeOff } from "react-icons/fi";
 import { FaBirthdayCake } from "react-icons/fa";
 import {
   Chart as ChartJS,
@@ -128,6 +128,13 @@ export default function Dashboard() {
   const [presenceDate, setPresenceDate] = useState(now.toISOString().split("T")[0]);
   const [presenceRecords, setPresenceRecords] = useState([]);
   const [presenceLoading, setPresenceLoading] = useState(false);
+  const [lateStreaks, setLateStreaks] = useState({});
+  const [latePercentMap, setLatePercentMap] = useState({});
+  const [showConsistentLate, setShowConsistentLate] = useState(false);
+  const [showMonthWiseLate, setShowMonthWiseLate] = useState(false);
+  const [activeToggleLate, setActiveToggleLate] = useState(false);
+  const [activeToggleAbsent, setActiveToggleAbsent] = useState(false);
+  const [activeToggleLeave, setActiveToggleLeave] = useState(false);
 
   const toggleSeries = (label) => {
     setActiveSeries((prev) => (prev === label ? null : label));
@@ -460,6 +467,118 @@ export default function Dashboard() {
         const present = labels.map(l => dailyData[l].present + dailyData[l].wfh);
         const late = labels.map(l => dailyData[l].late);
         const leave = labels.map(l => dailyData[l].leave);
+
+        // Calculate late streaks ending today (or the end of the selected month)
+        const todayObj = new Date();
+        let anchorDateStr = getLocalDateString(todayObj);
+        
+        // If the selected month/year is different from the current month/year,
+        // anchor at the end of that selected month.
+        if (year !== todayObj.getFullYear() || month !== todayObj.getMonth()) {
+          const lastDay = new Date(year, month + 1, 0);
+          anchorDateStr = getLocalDateString(lastDay);
+        }
+
+        // Find all holidays in the records to know if a date is a holiday
+        const holidayDates = new Set();
+        records.forEach(r => {
+          if (r.status?.toLowerCase() === "holiday") {
+            const dStr = getLocalDateString(r.date);
+            if (dStr) holidayDates.add(dStr);
+          }
+        });
+
+        const streaks = {};
+        const monthLatePercent = {};
+        const userRecordsMap = {};
+        records.forEach(r => {
+          const uid = r.user?._id || r.user;
+          if (!uid) return;
+          const uidStr = String(uid);
+          if (!userRecordsMap[uidStr]) {
+            userRecordsMap[uidStr] = [];
+          }
+          userRecordsMap[uidStr].push(r);
+        });
+
+        Object.keys(userRecordsMap).forEach(uidStr => {
+          const empRecs = userRecordsMap[uidStr];
+          const dateMap = {};
+          empRecs.forEach(r => {
+            const dateStr = getLocalDateString(r.date);
+            if (!dateStr) return;
+            dateMap[dateStr] = r.status?.toLowerCase();
+          });
+          
+          let streak = 0;
+          let currentDate = parseLocalDate(anchorDateStr);
+          
+          // Go backwards day by day for up to 30 days
+          for (let i = 0; i < 30; i++) {
+            const dStr = getLocalDateString(currentDate);
+            
+            // Do not check future dates compared to today
+            const todayStr = getLocalDateString(todayObj);
+            if (dStr > todayStr) {
+              currentDate.setDate(currentDate.getDate() - 1);
+              continue;
+            }
+
+            const status = dateMap[dStr];
+            const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, ...
+            
+            const isSunday = dayOfWeek === 0;
+            const isHoliday = holidayDates.has(dStr) || status === "holiday";
+            const isWeeklyOff = status === "weekly-off" || isSunday;
+
+            if (status === "late") {
+              streak++;
+            } else if (status === "present" || status === "work-from-home" || status === "on-field") {
+              // Present on time breaks the streak, even if holiday/sunday
+              break;
+            } else if (isWeeklyOff || isHoliday || status === "absent" || status === "leave") {
+              // Ignore weekly off, holidays, absent, and leave (keep walking backwards)
+            } else {
+              // no record on a working day breaks the streak
+              break;
+            }
+            
+            currentDate.setDate(currentDate.getDate() - 1);
+          }
+          
+          streaks[uidStr] = streak;
+
+          // Calculate > 50% late in current month (up to anchor date)
+          let currentMonthDaysPassed = 0;
+          let currentMonthLateDays = 0;
+          let checkDate = new Date(year, month, 1);
+          const anchorDateObj = parseLocalDate(anchorDateStr);
+          
+          while (checkDate <= anchorDateObj) {
+            const dStr = getLocalDateString(checkDate);
+            const status = dateMap[dStr];
+            const dayOfWeek = checkDate.getDay();
+            const isSunday = dayOfWeek === 0;
+            const isHoliday = holidayDates.has(dStr) || status === "holiday";
+            const isWeeklyOff = status === "weekly-off" || isSunday;
+            
+            if (!isWeeklyOff && !isHoliday) {
+              currentMonthDaysPassed++;
+              if (status === "late") {
+                currentMonthLateDays++;
+              }
+            }
+            checkDate.setDate(checkDate.getDate() + 1);
+          }
+          
+          if (currentMonthDaysPassed > 0) {
+            if ((currentMonthLateDays / currentMonthDaysPassed) >= 0.5 && currentMonthLateDays > 0) {
+               monthLatePercent[uidStr] = { late: currentMonthLateDays, total: currentMonthDaysPassed };
+            }
+          }
+        });
+        setLateStreaks(streaks);
+        setLatePercentMap(monthLatePercent);
 
         setTrendData({ labels, present, late, leave, raw: records });
         setMonthStats(prev => ({ ...prev, todaySummary: todayStats }));
@@ -827,7 +946,7 @@ export default function Dashboard() {
         const s = rec.status?.toLowerCase();
         // Count as present if check-in is recorded
         const hasCheckIn = !!rec.checkIn;
-        if (hasCheckIn || s === "present" || s === "work-from-home" || s === "late") {
+        if (hasCheckIn || s === "present" || s === "work-from-home" || s === "late" || s === "on-field") {
           structure[compName].present++;
           structure[compName].departments[deptName].present++;
         }
@@ -874,6 +993,16 @@ export default function Dashboard() {
 
           <div className="group bg-white rounded-md border border-slate-200 shadow-sm p-2 relative overflow-hidden flex flex-col gap-0.5 transition-standard hover:shadow-md">
             <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full opacity-30 bg-rose-500/20" />
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveToggleLate(!activeToggleLate);
+              }}
+              className={`absolute top-1.5 right-1.5 z-20 p-0.5 rounded-full transition-colors ${activeToggleLate ? 'text-rose-500 bg-rose-50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+              title={activeToggleLate ? "Close details" : "Keep details open"}
+            >
+              {activeToggleLate ? <FiEyeOff size={11} /> : <FiEye size={11} />}
+            </button>
             <div className="flex flex-col">
               <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Late Coming</p>
               <p className="text-[10px] text-slate-400 font-bold">Today</p>
@@ -885,24 +1014,61 @@ export default function Dashboard() {
             <p className="text-[9px] font-bold flex items-center gap-1 leading-tight mt-0.5">
               <span className="text-slate-300 font-medium tracking-tighter">Daily Track</span>
             </p>
-            {/* HOVER TOOLTIP FOR LATE EMPLOYEES */}
-            {summary?.lateEmployees?.length > 0 && (
-              <div className="absolute inset-0 bg-white/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col p-2">
-                 <p className="text-[9px] font-bold text-rose-500 uppercase tracking-wider mb-1 border-b border-rose-100 pb-0.5">Late Today</p>
-                 <div className="flex-1 overflow-y-auto custom-scrollbar-thin">
-                   {summary.lateEmployees.map((emp, i) => (
-                     <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-50 last:border-0">
-                       <p className="text-[10px] font-medium text-slate-700 truncate">{emp.name || emp}</p>
-                       <p className="text-[9px] font-bold text-rose-400 ml-2 shrink-0">{emp.checkIn || ""}</p>
-                     </div>
-                   ))}
-                 </div>
-              </div>
-            )}
+            <div className={`absolute inset-0 bg-white/95 backdrop-blur-sm transition-opacity duration-300 z-10 flex flex-col p-2 ${activeToggleLate ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'}`}>
+               <p className="text-[9px] font-bold text-rose-500 uppercase tracking-wider mb-1 border-b border-rose-100 pb-0.5">Late Today</p>
+               <div className="flex-1 overflow-y-auto custom-scrollbar-thin pr-1">
+                 {summary?.lateEmployees?.length > 0 ? (
+                   summary.lateEmployees.map((emp, i) => {
+                     const empName = typeof emp === 'object' && emp !== null ? emp.name : emp;
+                     const empId = typeof emp === 'object' && emp !== null ? (emp.userId || emp._id) : null;
+                     let streakVal = 0;
+                     if (empId) {
+                       streakVal = lateStreaks[String(empId)] || 0;
+                     } else if (empName) {
+                       const match = allEmployees.find(e => e.user?.name === empName || e.name === empName);
+                       if (match) {
+                         const userId = match.user?._id || match.userId || match._id;
+                         streakVal = lateStreaks[String(userId)] || 0;
+                       }
+                     }
+                     const isStreak = streakVal >= 5;
+                     return (
+                        <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-50 last:border-0">
+                          <p className={`text-[10px] font-medium truncate flex items-center gap-1 ${isStreak ? 'text-rose-600 font-bold' : 'text-slate-700'}`}>
+                            <span>{empName}</span>
+                            {isStreak && (
+                              <span 
+                                className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[7px] font-black bg-rose-50 border border-rose-200 text-rose-600 shrink-0"
+                                title={`Continuous late for ${streakVal} days`}
+                              >
+                                <FiAlertCircle size={8} className="animate-pulse" />
+                                {streakVal}d
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-[9px] font-bold text-rose-400 ml-2 shrink-0">{emp.checkIn || ""}</p>
+                        </div>
+                      );
+                   })
+                 ) : (
+                   <p className="text-[10px] text-slate-400 italic mt-2">No late arrivals today</p>
+                 )}
+               </div>
+            </div>
           </div>
 
           <div className="group bg-white rounded-md border border-slate-200 shadow-sm p-2 relative overflow-hidden flex flex-col gap-0.5 transition-standard hover:shadow-md">
             <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full opacity-30 bg-orange-500/20" />
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveToggleAbsent(!activeToggleAbsent);
+              }}
+              className={`absolute top-1.5 right-1.5 z-20 p-0.5 rounded-full transition-colors ${activeToggleAbsent ? 'text-orange-500 bg-orange-50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+              title={activeToggleAbsent ? "Close details" : "Keep details open"}
+            >
+              {activeToggleAbsent ? <FiEyeOff size={11} /> : <FiEye size={11} />}
+            </button>
             <div className="flex flex-col">
               <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Absent</p>
               <p className="text-[10px] text-slate-400 font-bold">Today</p>
@@ -914,26 +1080,37 @@ export default function Dashboard() {
             <p className="text-[9px] font-bold flex items-center gap-1 leading-tight mt-0.5">
               <span className="text-slate-300 font-medium tracking-tighter">Daily Track</span>
             </p>
-            {/* HOVER TOOLTIP FOR ABSENT EMPLOYEES */}
-            {summary?.absentEmployees?.length > 0 && (
-              <div className="absolute inset-0 bg-white/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col p-2">
-                 <p className="text-[9px] font-bold text-orange-500 uppercase tracking-wider mb-1 border-b border-orange-100 pb-0.5">Absent Today</p>
-                 <div className="flex-1 overflow-y-auto custom-scrollbar-thin">
-                    {summary.absentEmployees.map((emp, i) => (
-                      <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-50 last:border-0">
-                        <p className="text-[10px] font-medium text-slate-700 truncate">{typeof emp === 'object' && emp !== null ? emp.name : emp}</p>
-                        {typeof emp === 'object' && emp !== null && emp.checkIn && (
-                          <p className="text-[9px] font-bold text-orange-400 ml-2 shrink-0">{emp.checkIn}</p>
-                        )}
-                      </div>
-                    ))}
-                 </div>
-              </div>
-            )}
+            <div className={`absolute inset-0 bg-white/95 backdrop-blur-sm transition-opacity duration-300 z-10 flex flex-col p-2 ${activeToggleAbsent ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'}`}>
+               <p className="text-[9px] font-bold text-orange-500 uppercase tracking-wider mb-1 border-b border-orange-100 pb-0.5">Absent Today</p>
+               <div className="flex-1 overflow-y-auto custom-scrollbar-thin pr-1">
+                 {summary?.absentEmployees?.length > 0 ? (
+                   summary.absentEmployees.map((emp, i) => (
+                     <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-50 last:border-0">
+                       <p className="text-[10px] font-medium text-slate-700 truncate">{typeof emp === 'object' && emp !== null ? emp.name : emp}</p>
+                       {typeof emp === 'object' && emp !== null && emp.checkIn && (
+                         <p className="text-[9px] font-bold text-orange-400 ml-2 shrink-0">{emp.checkIn}</p>
+                       )}
+                     </div>
+                   ))
+                 ) : (
+                   <p className="text-[10px] text-slate-400 italic mt-2">No absentees today</p>
+                 )}
+               </div>
+            </div>
           </div>
 
           <div className="group bg-white rounded-md border border-slate-200 shadow-sm p-2 relative overflow-hidden flex flex-col gap-0.5 transition-standard hover:shadow-md">
             <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full opacity-30 bg-amber-500/20" />
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveToggleLeave(!activeToggleLeave);
+              }}
+              className={`absolute top-1.5 right-1.5 z-20 p-0.5 rounded-full transition-colors ${activeToggleLeave ? 'text-amber-500 bg-amber-50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+              title={activeToggleLeave ? "Close details" : "Keep details open"}
+            >
+              {activeToggleLeave ? <FiEyeOff size={11} /> : <FiEye size={11} />}
+            </button>
             <div className="flex flex-col">
               <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Leave</p>
               <p className="text-[10px] text-slate-400 font-bold">Today</p>
@@ -945,20 +1122,21 @@ export default function Dashboard() {
             <p className="text-[9px] font-bold flex items-center gap-1 leading-tight mt-0.5">
               <span className="text-slate-300 font-medium tracking-tighter">Daily Track</span>
             </p>
-            {/* HOVER TOOLTIP FOR LEAVE EMPLOYEES */}
-            {summary?.onLeaveEmployees?.length > 0 && (
-              <div className="absolute inset-0 bg-white/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col p-2">
-                 <p className="text-[9px] font-bold text-amber-500 uppercase tracking-wider mb-1 border-b border-amber-100 pb-0.5">On Leave</p>
-                 <div className="flex-1 overflow-y-auto custom-scrollbar-thin">
-                   {summary.onLeaveEmployees.map((emp, i) => (
+            <div className={`absolute inset-0 bg-white/95 backdrop-blur-sm transition-opacity duration-300 z-10 flex flex-col p-2 ${activeToggleLeave ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'}`}>
+               <p className="text-[9px] font-bold text-amber-500 uppercase tracking-wider mb-1 border-b border-amber-100 pb-0.5">On Leave</p>
+               <div className="flex-1 overflow-y-auto custom-scrollbar-thin pr-1">
+                 {summary?.onLeaveEmployees?.length > 0 ? (
+                   summary.onLeaveEmployees.map((emp, i) => (
                      <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-50 last:border-0">
                        <p className="text-[10px] font-medium text-slate-700 truncate">{emp.name || emp}</p>
                        <p className="text-[9px] font-bold text-amber-400 ml-2 shrink-0">{emp.duration || ""}</p>
                      </div>
-                   ))}
-                 </div>
-              </div>
-            )}
+                   ))
+                 ) : (
+                   <p className="text-[10px] text-slate-400 italic mt-2">No leaves today</p>
+                 )}
+               </div>
+            </div>
           </div>
 
           <div className="bg-white rounded-md border border-slate-200 shadow-sm p-2 relative overflow-hidden flex flex-col gap-0.5 transition-standard hover:shadow-md">
@@ -1093,7 +1271,7 @@ export default function Dashboard() {
                           border:          `1px solid ${isActive ? color + "22" : "transparent"}`,
                         }}
                       >
-                        {label}
+                        {label} - {fullLabel}
                       </button>
                     );
                   })}
@@ -1245,16 +1423,21 @@ export default function Dashboard() {
                       {/* Department Inline Badges */}
                       <div className="flex flex-wrap gap-2 pl-3.5">
                         {comp.sortedDepts.map((dept, dIdx) => {
-                          const palette = [
-                            { bg: "#f8fafc", border: "#f1f5f9", text: "#475569" }, // Slate
-                            { bg: "#f0f9ff", border: "#e0f2fe", text: "#0284c7" }, // Blue
-                            { bg: "#f0fdf4", border: "#dcfce7", text: "#16a34a" }, // Green
-                            { bg: "#fdf4ff", border: "#fae8ff", text: "#c026d3" }, // Fuchsia
-                            { bg: "#fff7ed", border: "#ffedd5", text: "#ea580c" }, // Orange
-                            { bg: "#fef2f2", border: "#fee2e2", text: "#dc2626" }, // Red
-                            { bg: "#ecfeff", border: "#cffafe", text: "#0891b2" }, // Cyan
-                          ][dIdx % 7];
-                          
+                          // const palette = [
+                          //   { bg: "#f8fafc", border: "#f1f5f9", text: "#475569" }, // Slate
+                          //   { bg: "#f0f9ff", border: "#e0f2fe", text: "#0284c7" }, // Blue
+                          //   { bg: "#f0fdf4", border: "#dcfce7", text: "#16a34a" }, // Green
+                          //   { bg: "#fdf4ff", border: "#fae8ff", text: "#c026d3" }, // Fuchsia
+                          //   { bg: "#fff7ed", border: "#ffedd5", text: "#ea580c" }, // Orange
+                          //   { bg: "#fef2f2", border: "#fee2e2", text: "#dc2626" }, // Red
+                          //   { bg: "#ecfeff", border: "#cffafe", text: "#0891b2" }, // Cyan
+                          // ][dIdx % 7];
+
+                           const palette =[
+                            { bg: "#f0f9ff", border: "#e0f2fe", text: "#475569" },
+                           ]
+
+
                           return (
                             <div 
                               key={dIdx} 
@@ -1296,14 +1479,36 @@ export default function Dashboard() {
             {/* Header + filters */}
             <div className="px-4 py-1.5 border-b border-slate-100 flex-shrink-0">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <p className="font-black text-slate-800 text-[11px] uppercase tracking-widest">Attendance Explorer</p>
                     <Link to="/dashboard/employees" className="text-[9px] font-black text-blue-600 hover:underline uppercase tracking-tighter">VIEW ALL →</Link>
                   </div>
+                  {showMonthWiseLate && (
+                    <span className="text-[9px] text-amber-500 italic mt-0.5 font-medium tracking-tight">
+                      *Showing employees late for ≥50% of the current month
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1.5">
+                  <button 
+                    onClick={() => {
+                      setShowConsistentLate(!showConsistentLate);
+                      if (!showConsistentLate) setShowMonthWiseLate(false);
+                    }}
+                    className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold border rounded-md transition-colors ${showConsistentLate ? 'text-white bg-rose-600 border-rose-600' : 'text-rose-600 bg-rose-50 border-rose-200 hover:bg-rose-100'}`}
+                  >
+                    <FiAlertCircle size={11} /> Consistently Late
+                  </button>
+                  {showConsistentLate && (
+                    <button 
+                      onClick={() => setShowMonthWiseLate(!showMonthWiseLate)}
+                      className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold border rounded-md transition-colors ${showMonthWiseLate ? 'text-white bg-amber-500 border-amber-500' : 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100'}`}
+                    >
+                      <FiAlertCircle size={11} /> Month Wise
+                    </button>
+                  )}
                   <CustomSelector 
                     icon={<Building size={11} className="text-slate-400" />}
                     value={empCompanyFilter}
@@ -1352,7 +1557,13 @@ export default function Dashboard() {
                 };
 
                 // Use allEmployees (unfiltered) as base so company dropdown works for all companies
-                const baseData = allEmployees.length > 0 ? allEmployees : employeesData;
+                let baseData = allEmployees.length > 0 ? allEmployees : employeesData;
+                
+                // Filter out inactive and terminated employees
+                baseData = baseData.filter(emp => {
+                  const status = (emp.status || "").toLowerCase();
+                  return status !== "inactive" && status !== "terminated";
+                });
 
                 // Filter by company
                 let filtered = empCompanyFilter === "all"
@@ -1369,11 +1580,22 @@ export default function Dashboard() {
                     }
                     const s = rec.status?.toLowerCase();
                     const hasCheckIn = !!rec.checkIn;
-                    if (empStatusFilter === "present") return hasCheckIn || s === "present" || s === "work-from-home";
+                    if (empStatusFilter === "present") return hasCheckIn || s === "present" || s === "work-from-home" || s === "on-field";
                     if (empStatusFilter === "late") return s === "late";
                     if (empStatusFilter === "absent") return !hasCheckIn && s === "absent";
                     if (empStatusFilter === "leave") return s === "leave";
                     return true;
+                  });
+                }
+
+                if (showConsistentLate) {
+                  filtered = filtered.filter(emp => {
+                    const userId = String(emp.user?._id || emp.userId || emp._id);
+                    if (showMonthWiseLate) {
+                       return latePercentMap[userId];
+                    } else {
+                       return lateStreaks[userId] >= 5;
+                    }
                   });
                 }
 
@@ -1420,6 +1642,7 @@ export default function Dashboard() {
                           absent: { color: "#dc2626", bg: "rgba(220,38,38,0.08)", label: "Absent" },
                           leave: { color: "#7c3aed", bg: "rgba(124,58,237,0.08)", label: "Leave" },
                           "half-day": { color: "#0891b2", bg: "rgba(8,145,178,0.08)", label: "Half Day" },
+                          "on-field": { color: "#0891b2", bg: "rgba(8,145,178,0.08)", label: "On Field" },
                         };
                         const st = statusStyle[todayStatus] || { color: "#64748b", bg: "rgba(100,116,139,0.08)", label: todayStatus };
 
@@ -1434,7 +1657,27 @@ export default function Dashboard() {
                                   alt={emp.user?.name || "Employee"}
                                 />
                                 <div>
-                                  <p className="font-bold text-slate-700 text-[12px] leading-tight">{emp.user?.name || "N/A"}</p>
+                                  <p className={`font-bold text-[12px] leading-tight flex items-center gap-1.5 ${lateStreaks[String(userId)] >= 5 ? 'text-rose-600 font-black' : 'text-slate-700'}`}>
+                                    {emp.user?.name || "N/A"}
+                                    {lateStreaks[String(userId)] >= 5 && !showMonthWiseLate && (
+                                      <span 
+                                        className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-rose-50 border border-rose-200 text-rose-600 animate-pulse"
+                                        title={`Continuous late for ${lateStreaks[String(userId)]} days`}
+                                      >
+                                        <FiAlertCircle size={9} />
+                                        {lateStreaks[String(userId)]} Days Streak
+                                      </span>
+                                    )}
+                                    {latePercentMap[String(userId)] && showMonthWiseLate && (
+                                      <span 
+                                        className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-amber-50 border border-amber-200 text-amber-600 animate-pulse"
+                                        title={`Late for ${latePercentMap[String(userId)].late} out of ${latePercentMap[String(userId)].total} days`}
+                                      >
+                                        <FiAlertCircle size={9} />
+                                        {Math.round((latePercentMap[String(userId)].late / latePercentMap[String(userId)].total) * 100)}% Late
+                                      </span>
+                                    )}
+                                  </p>
                                   <p className="text-[9px] text-slate-400 font-bold uppercase">{emp.employeeId}</p>
                                 </div>
                               </div>
@@ -1710,6 +1953,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      {/* LATE EMPLOYEES POPUP REMOVED */}
       </div>
     </div>
   );

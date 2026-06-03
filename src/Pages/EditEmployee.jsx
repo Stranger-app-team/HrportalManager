@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
 import { X, Camera, Upload, ChevronDown, Eye, EyeOff, Save, Info, Briefcase, MapPin, Lock, CreditCard, Paperclip, Monitor, Laptop, Plus } from 'lucide-react';
 import { getFullUrl } from '../utils/urlHelper';
+import EmployeeDocuments from '../components/Employees/EmployeeDocuments';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -72,9 +73,18 @@ export default function EditEmployee() {
 
   const [selectedAssets, setSelectedAssets] = useState([]);
   const [profilePhoto, setProfilePhoto] = useState(null);
+
   const [profilePhotoPreview, setProfilePhotoPreview] = useState(null);
-  const [uploadedFiles, setUploadedFiles] = useState({ aadharCard: null, panCard: null, appointmentLetter: null, resume: null });
-  const [existingFiles, setExistingFiles] = useState({ aadharCard: null, panCard: null, appointmentLetter: null, resume: null });
+  const [employeeDocuments, setEmployeeDocuments] = useState([]);
+
+  const refreshDocuments = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const eRes = await fetch(`${API_BASE_URL}/employee/${paramId}`, { headers: { Authorization: `Bearer ${token}` } });
+      const emp = await eRes.json();
+      if (eRes.ok && emp) setEmployeeDocuments(emp.documents || []);
+    } catch (e) {}
+  };
 
   // ── Initial Fetch (Companies then Employee) ──
   useEffect(() => {
@@ -130,12 +140,7 @@ export default function EditEmployee() {
           
           if (emp.profilePhoto) setProfilePhotoPreview(getFullUrl(emp.profilePhoto, API_BASE_URL));
           
-          setExistingFiles({
-            aadharCard: emp.aadharCard ? getFullUrl(emp.aadharCard, API_BASE_URL) : null,
-            panCard: emp.panCard ? getFullUrl(emp.panCard, API_BASE_URL) : null,
-            appointmentLetter: emp.appointmentLetter ? getFullUrl(emp.appointmentLetter, API_BASE_URL) : null,
-            resume: emp.resume ? getFullUrl(emp.resume, API_BASE_URL) : null
-          });
+          setEmployeeDocuments(emp.documents || []);
 
           setInitialSalary(emp.salary || "");
           setSalaryHistory(emp.salaryHistory || []);
@@ -276,14 +281,6 @@ export default function EditEmployee() {
       } else if (!profilePhotoPreview) {
         fData.append("profilePhoto", "");
       }
-
-      Object.keys(uploadedFiles).forEach(key => {
-        if (uploadedFiles[key]) {
-          fData.append(key, uploadedFiles[key]);
-        } else if (existingFiles[key] === null) {
-          fData.append(key, "");
-        }
-      });
 
       const res = await fetch(`${API_BASE_URL}/employee/${paramId}`, {
         method: "PUT",
@@ -654,60 +651,13 @@ export default function EditEmployee() {
           )}
 
           {/* DOCUMENTS SECTION */}
-          <div className="bg-white p-6 rounded-lg border border-slate-100 shadow-lg shadow-slate-200/40 mb-12">
-             <SecHeader icon={Paperclip} title="Documents Upload" subtitle="Mandatory attachments" />
-             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
-                {[
-                  { key: 'aadharCard', label: 'Aadhar Card' },
-                  { key: 'panCard', label: 'PAN Card' },
-                  { key: 'appointmentLetter', label: 'Offer Letter' },
-                  { key: 'resume', label: 'Resume' }
-                ].map(doc => (
-                   <label key={doc.key} className="relative cursor-pointer group">
-                      <div className={`p-4 rounded-xl border border-dashed transition-all flex flex-col items-center gap-2
-                         ${uploadedFiles[doc.key] || existingFiles[doc.key] ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200 group-hover:bg-white group-hover:border-blue-200 group-hover:shadow-md'}`}>
-                         <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors
-                            ${uploadedFiles[doc.key] || existingFiles[doc.key] ? 'bg-emerald-500 text-white' : 'bg-white text-gray-400 border border-slate-100 group-hover:bg-blue-600 group-hover:text-white'}`}>
-                            <Upload size={16} />
-                         </div>
-                         <p className="text-[10px] font-black text-slate-700 uppercase">{doc.label}</p>
-                         <p className="text-[8px] text-slate-400 font-bold italic truncate max-w-full px-2">
-                            {uploadedFiles[doc.key] ? `✓ ${uploadedFiles[doc.key].name}` : existingFiles[doc.key] ? "✓ ATTACHED" : "SELECT FILE"}
-                         </p>
-                         {(uploadedFiles[doc.key] || existingFiles[doc.key]) && (
-                            <div className="flex gap-3 mt-1">
-                               <button
-                                  type="button"
-                                  onClick={(e) => {
-                                     e.preventDefault();
-                                     e.stopPropagation();
-                                     const url = uploadedFiles[doc.key] ? URL.createObjectURL(uploadedFiles[doc.key]) : existingFiles[doc.key];
-                                     window.open(url, '_blank');
-                                  }}
-                                  className="text-[10px] text-blue-600 font-bold hover:underline flex items-center gap-1"
-                               >
-                                  <Eye size={12} /> View
-                               </button>
-                               <button
-                                  type="button"
-                                  onClick={(e) => {
-                                     e.preventDefault();
-                                     e.stopPropagation();
-                                     setUploadedFiles(prev => ({ ...prev, [doc.key]: null }));
-                                     setExistingFiles(prev => ({ ...prev, [doc.key]: null }));
-                                  }}
-                                  className="text-[10px] text-rose-500 font-bold hover:underline flex items-center gap-1"
-                               >
-                                  <X size={12} /> Remove
-                               </button>
-                            </div>
-                         )}
-                      </div>
-                      <input type="file" className="hidden" onChange={(e) => setUploadedFiles({...uploadedFiles, [doc.key]: e.target.files[0]})} />
-                   </label>
-                ))}
-             </div>
-          </div>
+          <EmployeeDocuments 
+            employeeId={paramId} 
+            documents={employeeDocuments} 
+            onRefresh={refreshDocuments} 
+            isHr={true} 
+            mode="edit" 
+          />
         </div>
       </div>
     </div>

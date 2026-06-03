@@ -12,6 +12,8 @@ export default function SettingsPage() {
   const [companyId, setCompanyId] = useState(localStorage.getItem("companyId") || "");
   const [showEventModal, setShowEventModal] = useState(false);
   const [showListModal, setShowListModal] = useState(false);
+  const [showPolicyModal, setShowPolicyModal] = useState(false);
+  const [policies, setPolicies] = useState([]);
   const [activeListTab, setActiveListTab] = useState("holiday");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -138,7 +140,19 @@ export default function SettingsPage() {
     }
   };
 
-  useEffect(() => { fetchEvents(); }, [selectedMonth, selectedYear, companyId]);
+  const fetchPolicies = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API_BASE_URL}/policies?companyId=${companyId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        setPolicies(res.data.data);
+      }
+    } catch (error) { console.error("Policy fetch error:", error); }
+  };
+
+  useEffect(() => { fetchEvents(); fetchPolicies(); }, [selectedMonth, selectedYear, companyId]);
 
   const fetchEvents = async () => {
     try {
@@ -405,7 +419,7 @@ export default function SettingsPage() {
     <div className="w-full h-full flex flex-col p-2 sm:p-3 overflow-hidden font-['Plus_Jakarta_Sans',sans-serif]">
       
       {/* ===================== TOP CARDS - Slim ===================== */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 shrink-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-3 shrink-0">
 
           {/* CARD 1 — Working Days */}
           <div className="bg-white border border-slate-200 shadow-sm rounded-lg p-3 flex items-center gap-3 transition-standard hover:shadow-md">
@@ -461,7 +475,23 @@ export default function SettingsPage() {
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight">MONTHLY EVENTS</p>
                 <div className="flex items-baseline gap-1 mt-0.5">
                    <h2 className="text-lg font-black text-slate-800 tracking-tight leading-none">{events.length}</h2>
-                   <span className="text-[7px] text-slate-400 font-bold uppercase tracking-tighter">TOTAL ITEMS</span>
+                   <span className="text-[7px] text-indigo-500 font-bold uppercase tracking-tighter">CLICK ON DOWNLOAD FOR HOLIDAY EVENT LIST</span>
+                </div>
+             </div>
+          </div>
+
+          {/* CARD 4 — Company Policies */}
+          <div onClick={() => setShowPolicyModal(true)} className="relative bg-white border border-slate-200 shadow-sm rounded-lg p-3 flex items-center gap-3 transition-standard hover:shadow-md cursor-pointer group">
+             <div className="w-9 h-9 rounded bg-emerald-50 text-emerald-500 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center transition-all shrink-0">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+             </div>
+             <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight">COMPANY POLICIES</p>
+                <div className="flex items-baseline gap-1 mt-0.5">
+                   <h2 className="text-lg font-black text-slate-800 tracking-tight leading-none">{policies.length}</h2>
+                   <span className="text-[7px] text-emerald-500 font-bold uppercase tracking-tighter">CLICK TO VIEW</span>
                 </div>
              </div>
           </div>
@@ -763,6 +793,39 @@ export default function SettingsPage() {
                   className="flex-[2] h-10 bg-blue-600 text-white text-[11px] font-bold rounded-lg shadow-sm hover:bg-blue-700 active:scale-95 transition-all uppercase tracking-widest">
                   Save Event
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POLICY VIEW MODAL (Manager: Read Only) */}
+      {showPolicyModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-2xl bg-white rounded-xl p-6 shadow-2xl relative border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+            <button onClick={() => setShowPolicyModal(false)} className="absolute top-5 right-5 text-slate-300 hover:text-slate-600 transition-colors z-20"><FiPlus className="rotate-45" size={20}/></button>
+            <h3 className="text-lg font-bold text-slate-800 tracking-tight uppercase mb-6">Company Policies</h3>
+            
+            <div className="flex-1 overflow-y-auto no-scrollbar">
+              <div className="space-y-3">
+                {policies.length === 0 ? (
+                  <p className="text-[11px] text-slate-400 italic">No policies available.</p>
+                ) : (
+                  policies.map(p => (
+                    <div key={p._id} className="p-4 bg-slate-50 border border-slate-100 rounded-lg group relative">
+                      <h5 className="text-[14px] font-bold text-slate-800 pr-10">{p.title}</h5>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-2 py-1 rounded">{p.category}</span>
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded ${p.isGlobal ? 'bg-slate-100 text-slate-500' : 'bg-emerald-50 text-emerald-600'}`}>
+                          {p.isGlobal ? 'Global' : 'Company Specific'}
+                        </span>
+                      </div>
+                      <div className="mt-4 text-[12px] text-slate-600 whitespace-pre-wrap leading-relaxed">
+                        {p.description}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
