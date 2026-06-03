@@ -274,13 +274,6 @@ export default function EmployeeRequests() {
               >
                 <FiClock size={18} className="group-hover:-rotate-90 transition-transform duration-300" />
               </button>
-              <button 
-                onClick={refreshAll}
-                className="p-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 transition-all shadow-sm group"
-                title="Refresh"
-              >
-                <FiActivity size={18} className={`${loading ? "animate-spin text-emerald-600" : "group-hover:scale-110"} transition-transform`} />
-              </button>
           </div>
         </div>
 
