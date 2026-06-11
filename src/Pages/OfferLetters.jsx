@@ -470,9 +470,17 @@ export default function OfferLetters() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (res.ok) { showToast('Offer letter approved! PDF generated.'); fetchLetters(); }
-      else showToast(data.message || 'Failed to approve', 'error');
-    } catch (e) { showToast('Network error', 'error'); }
+      if (res.ok) { 
+        showToast('Offer letter approved! PDF generated.'); 
+        fetchLetters(); 
+      } else {
+        console.error('Server error during approval:', data);
+        showToast(data.message || 'Failed to approve', 'error');
+      }
+    } catch (e) { 
+      console.error('Network error during approval:', e);
+      showToast('Network error', 'error'); 
+    }
     setActionLoading(null);
   };
 
