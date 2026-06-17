@@ -202,7 +202,7 @@ function compilePreview(bodyPlain, companyObj, selectedSig, formVals = {}, pdfBl
     /* ── Content area sits above the letterhead ── */
     .content-inner {
       position: absolute;
-      top:    140px;
+      top:    170px;
       left:   80px;
       right:  80px;
       bottom: 100px;
@@ -295,7 +295,7 @@ function compilePreview(bodyPlain, companyObj, selectedSig, formVals = {}, pdfBl
   <script>
   (function() {
     var PAGE_H    = 1123;
-    var TOP_PAD   = 140;
+    var TOP_PAD   = 170;
     var BOT_PAD   = 100;
     var CONTENT_H = PAGE_H - TOP_PAD - BOT_PAD;
     var PDF_BG    = ${pdfBg ? `'${pdfBlobUrl}'` : 'null'};
