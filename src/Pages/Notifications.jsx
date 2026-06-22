@@ -110,6 +110,7 @@ export default function HRNotificationPage() {
       style={{ fontFamily: "'DM Sans', sans-serif" }}
     >
       {/* ── Top Bar (matches Profile exactly) ── */}
+      {/*
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3 sm:gap-0">
         <div>
           <h1 className="text-[15px] font-bold text-gray-900 tracking-widest uppercase">Settings</h1>
@@ -138,6 +139,7 @@ export default function HRNotificationPage() {
           </div>
         </div>
       </div>
+      */}
 
       {/* ── Main Card ── */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
