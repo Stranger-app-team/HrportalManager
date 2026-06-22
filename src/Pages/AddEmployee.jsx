@@ -51,7 +51,8 @@ export default function AddEmployee() {
     pincode: '', officeEmail: '',
     temporaryPassword: '', roleLevel: 'Employee', basicSalary: '',
     salaryDate: new Date().toISOString().split('T')[0],
-    accountNumber: '', bankName: '', ifscCode: ''
+    accountNumber: '', bankName: '', ifscCode: '',
+    attendanceRequired: true
   });
 
   const [selectedAssets, setSelectedAssets] = useState([]);
@@ -181,6 +182,7 @@ export default function AddEmployee() {
       fData.append("password", formData.temporaryPassword);
       fData.append("userType", formData.roleLevel.toLowerCase());
       fData.append("companyId", formData.companyId);
+      fData.append("attendanceRequired", formData.attendanceRequired);
 
       // ── Optional plain-string fields (safe to append even if empty) ──
       fData.append("personalEmail", formData.email);
@@ -494,6 +496,17 @@ export default function AddEmployee() {
                             <option value="HR">HR</option>
                          </select>
                       </F>
+                      <div className="flex items-center mt-6">
+                         <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                               type="checkbox" 
+                               checked={formData.attendanceRequired}
+                               onChange={(e) => setFormData(prev => ({...prev, attendanceRequired: e.target.checked}))}
+                               className="w-4 h-4 cursor-pointer accent-blue-600 rounded border-slate-300 shadow-sm"
+                            />
+                            <span className="text-[11px] font-bold text-slate-600">Attendance Required</span>
+                         </label>
+                      </div>
                    </div>
                 </div>
              </div>

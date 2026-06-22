@@ -376,6 +376,10 @@ export default function Attendance() {
         }
       }
 
+      if (emp.attendanceRequired === false) {
+        return;
+      }
+
       empMap[uId] = {
         userId: uId,
         name: emp.user.name,

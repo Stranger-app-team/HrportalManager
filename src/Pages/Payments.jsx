@@ -578,6 +578,10 @@ export default function Payments() {
             <tbody className="divide-y divide-slate-50 font-bold">
                {activeTab === 'salaries' && payrolls
                  .filter(p => p.user?.name.toLowerCase().includes(filter.searchQuery.toLowerCase()))
+                 .filter(p => {
+                    const emp = employees.find(e => e.user?._id === p.user?._id);
+                    return !emp || emp.attendanceRequired !== false;
+                 })
                  .sort((a, b) => {
                     const weights = { approved: 2, paid: 3, default: 1 };
                     const wa = weights[a.approvalStatus] || weights.default;

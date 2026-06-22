@@ -5,6 +5,9 @@ import { X, ChevronDown, Eye, EyeOff, Info, Briefcase, MapPin, Lock, CreditCard,
 import { getFullUrl } from '../utils/urlHelper';
 import AttendanceHistoryModal from "../components/Employees/AttendanceHistoryModal";
 import EmployeeDocuments from "../components/Employees/EmployeeDocuments";
+import EmployeeWarnings from "../components/Employees/EmployeeWarnings";
+import IssueWarningModal from "../components/Employees/IssueWarningModal";
+import { ChevronRight, AlertTriangle } from "lucide-react";
 
 const SecHeader = ({ icon: Icon, title, subtitle }) => (
   <div className="flex items-center gap-4 mb-6">
@@ -44,6 +47,8 @@ export default function Profile() {
   const [companies, setCompanies] = useState([]);
   const [showSalary, setShowSalary] = useState(false);
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+  const [showIssueWarningModal, setShowIssueWarningModal] = useState(false);
+  const [refreshWarnings, setRefreshWarnings] = useState(0);
 
   const fetchInitialData = async () => {
     try {
@@ -108,6 +113,12 @@ export default function Profile() {
       <div className="bg-white border-b border-gray-100 flex-shrink-0 z-20">
         <div className="w-full px-4 h-14 flex items-center justify-end gap-3">
           <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setShowIssueWarningModal(true)}
+              className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold border border-red-100 hover:bg-red-100 transition-all"
+            >
+              <AlertTriangle size={16} /> Action
+            </button>
             <button 
               onClick={() => setShowAttendanceModal(true)}
               className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-sm font-bold border border-emerald-100 hover:bg-emerald-100 transition-all"
@@ -305,6 +316,12 @@ export default function Profile() {
             isHr={false} 
             mode="readOnly" 
           />
+          
+          {/* WARNINGS SECTION */}
+          <EmployeeWarnings
+            employeeId={employee._id}
+            refreshTrigger={refreshWarnings}
+          />
         </div>
       </div>
 
@@ -314,6 +331,14 @@ export default function Profile() {
         onClose={() => setShowAttendanceModal(false)}
         userId={employee?.user?._id}
       />
+
+      {showIssueWarningModal && (
+        <IssueWarningModal
+          employeeId={employee._id}
+          onClose={() => setShowIssueWarningModal(false)}
+          onSuccess={() => setRefreshWarnings(prev => prev + 1)}
+        />
+      )}
     </div>
   );
 }

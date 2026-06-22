@@ -65,7 +65,8 @@ export default function EditEmployee() {
     salaryDate: new Date().toISOString().split('T')[0],
     accountNumber: '',
     bankName: '',
-    ifscCode: ''
+    ifscCode: '',
+    attendanceRequired: true
   });
 
   const [initialSalary, setInitialSalary] = useState('');
@@ -134,7 +135,8 @@ export default function EditEmployee() {
             basicSalary: emp.salary || "",
             accountNumber: emp.bankDetails?.accountNumber || "",
             bankName: emp.bankDetails?.bankName || "",
-            ifscCode: emp.bankDetails?.ifsc || ""
+            ifscCode: emp.bankDetails?.ifsc || "",
+            attendanceRequired: emp.attendanceRequired !== false
           };
           setFormData(mappedData);
           
@@ -234,6 +236,7 @@ export default function EditEmployee() {
       fData.append("email", formData.officeEmail);
       fData.append("userType", formData.roleLevel.toLowerCase());
       fData.append("companyId", formData.companyId);
+      fData.append("attendanceRequired", formData.attendanceRequired);
 
       // ── Optional plain-string fields ──
       fData.append("personalEmail", formData.email);
@@ -557,6 +560,18 @@ export default function EditEmployee() {
                             <option value="HR">HR</option>
                          </select>
                       </F>
+                   </div>
+                   <div className="flex items-center mt-6">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                         <input 
+                            type="checkbox" 
+                            checked={formData.attendanceRequired}
+                            onChange={(e) => setFormData(prev => ({...prev, attendanceRequired: e.target.checked}))}
+                            className="w-4 h-4 cursor-pointer accent-blue-600 rounded border-slate-300 shadow-sm"
+                            disabled={isManager}
+                         />
+                         <span className="text-[11px] font-bold text-slate-600">Attendance Required</span>
+                      </label>
                    </div>
                 </div>
              </div>

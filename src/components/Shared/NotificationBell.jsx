@@ -151,7 +151,7 @@ export default function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-[100] animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed top-16 right-2 left-2 sm:left-auto sm:absolute sm:top-auto sm:right-0 sm:mt-2 sm:w-80 sm:max-w-sm bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-[100] animate-in fade-in zoom-in-95 duration-150">
           <div className="px-4 py-2 border-b border-slate-50 flex items-center justify-between">
             <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Notifications</h3>
             {unreadCount > 0 && (
@@ -181,8 +181,8 @@ export default function NotificationBell() {
                   </div>
                   <div className="flex-1 min-w-0 pr-4">
                     <p className="text-[11.5px] font-black text-slate-700 leading-tight uppercase truncate" title={n.title}>{n.title}</p>
-                    <p className="text-[11px] text-slate-500 mt-1 leading-snug line-clamp-2" title={cleanMessage(n)}>{cleanMessage(n)}</p>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wide block mt-1.5">{getRelativeTime(n.createdAt || new Date())}</span>
+                    <p className="text-[11px] text-slate-500 mt-0.5 leading-snug line-clamp-2" title={cleanMessage(n)}>{cleanMessage(n)}</p>
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wide block mt-1">{getRelativeTime(n.createdAt || new Date())}</span>
                   </div>
                   <button
                     onClick={(e) => markAsRead(n._id, e)}

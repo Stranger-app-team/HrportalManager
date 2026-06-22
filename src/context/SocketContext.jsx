@@ -52,6 +52,20 @@ export const SocketProvider = ({ children }) => {
             window.dispatchEvent(new CustomEvent('REFRESH_EMPLOYEES', { detail: data }));
         });
 
+        newSocket.on('warning_alert_acknowledged', (data) => {
+            console.log('Real-time acknowledgment received:', data);
+            toast.success(`An employee has just acknowledged their warning/alert!`, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                theme: "light",
+            });
+            window.dispatchEvent(new CustomEvent('warning_alert_acknowledged', { detail: data }));
+        });
+
         setSocket(newSocket);
 
         return () => {
