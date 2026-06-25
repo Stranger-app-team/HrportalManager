@@ -425,6 +425,7 @@ useEffect(() => {
                             <p className="text-[11px] font-bold text-slate-800 uppercase">{user?.name}</p>
                             <p className="text-[9px] text-slate-400 font-bold uppercase">{user?.userType}</p>
                          </div>
+                         {/*
                          <button 
                             onClick={() => { navigate("/dashboard/admin-profile"); setSelectedCard(null); }}
                             className="w-full px-4 py-2 text-left text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition-colors uppercase"
@@ -438,6 +439,7 @@ useEffect(() => {
                             Account Security
                          </button>
                          <div className="border-t border-slate-50 my-1" />
+                         */}
                          <button 
                             onClick={handleLogout}
                             className="w-full px-4 py-2 text-left text-[11px] font-bold text-rose-600 hover:bg-slate-50 transition-colors uppercase"
