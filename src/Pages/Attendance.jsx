@@ -624,10 +624,10 @@ export default function Attendance() {
           { label: "Attendance Ratio", value: dashboardCards.monthly?.attendanceRatio || 0, icon: BarChart3, color: "blue", sub: "PERCENTAGE" }
         ]).map((s, idx) => {
           const activeBorderMap = {
-            emerald: 'border-emerald-200',
-            rose: 'border-rose-200',
-            blue: 'border-blue-200',
-            amber: 'border-amber-200',
+            emerald: 'border-emerald-500',
+            rose: 'border-rose-500',
+            blue: 'border-blue-500',
+            amber: 'border-amber-500',
           };
           const iconBgMap = {
             emerald: 'bg-emerald-500/10 text-emerald-600',
@@ -635,24 +635,24 @@ export default function Attendance() {
             blue: 'bg-blue-500/10 text-blue-600',
             amber: 'bg-amber-500/10 text-amber-600',
           };
-          const isActive = statusFilter === s.status;
+          const isActive = s.status && statusFilter === s.status;
           return (
-          <div 
-            key={idx} 
-            onClick={() => s.status && setStatusFilter(statusFilter === s.status ? null : s.status)}
-            className={`bg-white rounded-lg p-3 flex items-center gap-3 transition-all hover:shadow-md cursor-pointer ${isActive ? `border-2 ${activeBorderMap[s.color] || 'border-slate-300'} shadow-sm` : 'border border-slate-200 shadow-sm'}`}
-          >
-            <div className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${iconBgMap[s.color] || ''}`}>
-              <s.icon size={18} />
-            </div>
-            <div>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-tight">{s.label}</p>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <h2 className="text-lg font-bold text-slate-800 tracking-tight">{s.value}</h2>
-                <span className="text-[7px] text-slate-300 font-bold uppercase">{s.sub}</span>
+            <div 
+              key={idx} 
+              onClick={() => s.status && setStatusFilter(statusFilter === s.status ? null : s.status)}
+              className={`bg-white rounded-lg p-3 flex items-center gap-3 transition-all hover:shadow-md cursor-pointer ${isActive ? `border-[1.5px] ${activeBorderMap[s.color] || 'border-slate-300'} shadow-sm scale-[1.02]` : 'border border-slate-200 shadow-sm'}`}
+            >
+              <div className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${iconBgMap[s.color] || ''}`}>
+                <s.icon size={18} />
+              </div>
+              <div>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-tight">{s.label}</p>
+                <div className="flex items-baseline gap-1 mt-0.5">
+                  <h2 className="text-lg font-bold text-slate-800 tracking-tight">{s.value}</h2>
+                  <span className="text-[7px] text-slate-300 font-bold uppercase">{s.sub}</span>
+                </div>
               </div>
             </div>
-          </div>
           );
         })}
       </div>
