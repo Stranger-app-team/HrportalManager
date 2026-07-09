@@ -650,11 +650,7 @@ export default function Payments() {
                     </td>
                     <td className="px-3 py-3">
                         <div className="flex flex-col gap-0.5">
-                           {(p.sundayPay > 0 || p.sundayWorkingDays > 0) && (
-                              <p className="text-[9px] text-slate-600 font-bold leading-tight">
-                                 <span className="text-emerald-500 mr-1">+</span>Sun Work: ₹{(p.sundayPay || Math.round((p.baseSalary / (p.workingDays || 26)) * (p.sundayWorkingDays || 0))).toLocaleString()} 
-                              </p>
-                           )}
+
                            {p.attendanceBonus > 0 && (
                               <p className="text-[9px] text-indigo-600 font-black leading-tight">
                                  <span className="text-indigo-500 mr-1">+</span>ATTENDANCE: ₹{p.attendanceBonus.toLocaleString()}
@@ -674,7 +670,7 @@ export default function Payments() {
                            {p.perks > 0 && <p className="text-[9px] text-emerald-600 font-bold leading-tight"><span className="text-emerald-500 mr-1">+</span>Perks: ₹{p.perks.toLocaleString()}</p>}
                            {p.officeExpenses > 0 && <p className="text-[9px] text-emerald-600 font-bold leading-tight"><span className="text-emerald-500 mr-1">+</span>Expenses: ₹{p.officeExpenses.toLocaleString()}</p>}
                            {p.penalties > 0 && <p className="text-[9px] text-rose-500 font-bold leading-tight"><span className="mr-1">-</span>Penalty: ₹{p.penalties.toLocaleString()}</p>}
-                           {!(p.officeExpenses || p.incentives || p.bonusAmount || p.perks || p.penalties || p.sundayPay || p.sundayWorkingDays || p.attendanceBonus || p.paidLeaveBonus) && <span className="text-[8px] text-slate-300 font-black uppercase tracking-widest">No Adjustments</span>}
+                           {!(p.officeExpenses || p.incentives || p.bonusAmount || p.perks || p.penalties || p.attendanceBonus || p.paidLeaveBonus) && <span className="text-[8px] text-slate-300 font-black uppercase tracking-widest">No Adjustments</span>}
                         </div>
                     </td>
                    <td className="px-3 py-3 group/payable">
