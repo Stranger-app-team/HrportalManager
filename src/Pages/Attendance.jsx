@@ -207,7 +207,17 @@ export default function Attendance() {
 
     const [inH, inM] = formData.checkInTime.split(':').map(Number);
     const checkInMinutes = inH * 60 + inM;
-    const lateThreshold = 9 * 60 + 15; // 09:15 AM
+
+    let shiftH = 9;
+    let shiftM = 0;
+    const selectedEmp = employees.find(e => e._id === formData.employeeId);
+    if (selectedEmp && selectedEmp.shiftStartTime && selectedEmp.shiftStartTime.includes(':')) {
+       const [h, m] = selectedEmp.shiftStartTime.split(':').map(Number);
+       if (!isNaN(h)) shiftH = h;
+       if (!isNaN(m)) shiftM = m;
+    }
+
+    const lateThreshold = (shiftH * 60) + shiftM + 15;
 
     let newStatus = "present";
 
@@ -228,7 +238,7 @@ export default function Attendance() {
     if (newStatus !== formData.status && (!formData.status || ["present", "late", "half-day"].includes(formData.status))) {
       setFormData(prev => ({ ...prev, status: newStatus }));
     }
-  }, [formData.checkInTime, formData.checkOutTime]);
+  }, [formData.checkInTime, formData.checkOutTime, formData.employeeId, employees]);
 
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const daysInMonth = new Date(filter.year, filter.month, 0).getDate();
