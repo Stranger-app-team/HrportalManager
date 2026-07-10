@@ -459,7 +459,7 @@ export default function Payments() {
              </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
              {/* Company & Date Filter */}
              <div className="flex items-center bg-slate-50 rounded-md border border-slate-100 p-0.5">
                 <CustomSelector 
@@ -487,7 +487,7 @@ export default function Payments() {
              </div>
 
              {/* Search and Action Buttons */}
-             <div className="flex items-center gap-1.5">
+             <div className="flex flex-wrap items-center gap-1.5 mt-2 sm:mt-0">
                {activeTab === 'salaries' && (
                  <>
                    <div className="relative group w-36">
@@ -533,7 +533,7 @@ export default function Payments() {
           {loading ? (
             <div className="p-10 text-center text-slate-300 font-bold uppercase tracking-widest animate-pulse text-[11px]">Loading...</div>
           ) : (
-          <table className="w-full text-left border-collapse table-fixed">
+          <table className="w-full min-w-[1000px] text-left border-collapse table-fixed">
             <thead className="sticky top-0 bg-white z-10 border-b border-slate-100">
                <tr className="text-slate-400">
                   {activeTab === 'salaries' ? (
@@ -610,6 +610,28 @@ export default function Payments() {
                          <div className="min-w-0">
                             <p className="text-[12px] font-bold text-slate-800 truncate leading-none">{p.user?.name}</p>
                             <p className="text-[9px] text-slate-400 font-medium mt-1 truncate">{p.user?.email}</p>
+                            {p.employee?.joiningDate && (() => {
+                               const jd = new Date(p.employee.joiningDate);
+                               if (jd.getMonth() + 1 === filter.month && jd.getFullYear() === filter.year) {
+                                 return (
+                                   <span className="inline-block mt-1.5 mr-1.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-widest bg-emerald-50 text-emerald-600 uppercase">
+                                     Joined: {jd.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                   </span>
+                                 );
+                               }
+                               return null;
+                             })()}
+                             {p.employee?.lastWorkingDate && (() => {
+                               const ld = new Date(p.employee.lastWorkingDate);
+                               if (ld.getMonth() + 1 === filter.month && ld.getFullYear() === filter.year) {
+                                 return (
+                                   <span className="inline-block mt-1.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-widest bg-rose-50 text-rose-600 uppercase">
+                                     Left: {ld.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                   </span>
+                                 );
+                               }
+                               return null;
+                             })()}
                          </div>
                       </div>
                    </td>
@@ -619,11 +641,48 @@ export default function Payments() {
                     </td>
                     <td className="px-3 py-3 text-center">
                        <div className="flex items-center justify-center gap-2">
-                          <div className="flex flex-col items-center min-w-[28px]">
+                          <div className="flex flex-col items-center min-w-[28px] relative group/work cursor-help">
                              <p className="text-[11px] font-black text-emerald-600 leading-none">
                                 {p.actualWorkDays !== undefined ? p.actualWorkDays : '-'}
                              </p>
                              <p className="text-[7px] text-slate-400 uppercase font-black tracking-tight mt-1">Work</p>
+                             <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 hidden group-hover/work:block w-max bg-slate-800 text-white text-[10px] px-3 py-2 rounded shadow-xl z-50 text-left">
+                                <div className="font-bold mb-1 border-b border-slate-600 pb-1 text-slate-200">Work Breakdown</div>
+                                <div className="flex justify-between gap-4">
+                                  <span>Regular Work:</span>
+                                  <span className="font-bold">{p.actualWorkDays - (p.sundayWorkingDays || 0) - (p.holidayDays || 0) - ((p.halfDays || 0) * 0.5) - (p.wfhDays || 0) - (p.onFieldDays || 0)}</span>
+                                </div>
+                                {(p.sundayWorkingDays || 0) > 0 && (
+                                  <div className="flex justify-between gap-4 text-orange-300 mt-1">
+                                    <span>Sundays Worked:</span>
+                                    <span className="font-bold">{(p.sundayWorkingDays || 0)}</span>
+                                  </div>
+                                )}
+                                {(p.holidayDays || 0) > 0 && (
+                                  <div className="flex justify-between gap-4 text-sky-300 mt-1">
+                                    <span>Company Holidays:</span>
+                                    <span className="font-bold">{(p.holidayDays || 0)}</span>
+                                  </div>
+                                )}
+                                {(p.wfhDays || 0) > 0 && (
+                                  <div className="flex justify-between gap-4 text-indigo-300 mt-1">
+                                    <span>Work From Home:</span>
+                                    <span className="font-bold">{(p.wfhDays || 0)}</span>
+                                  </div>
+                                )}
+                                {(p.onFieldDays || 0) > 0 && (
+                                  <div className="flex justify-between gap-4 text-teal-300 mt-1">
+                                    <span>On Field:</span>
+                                    <span className="font-bold">{(p.onFieldDays || 0)}</span>
+                                  </div>
+                                )}
+                                {(p.halfDays || 0) > 0 && (
+                                  <div className="flex justify-between gap-4 text-amber-300 mt-1">
+                                    <span>Half Days:</span>
+                                    <span className="font-bold">{(p.halfDays || 0)}</span>
+                                  </div>
+                                )}
+                             </div>
                           </div>
                           <div className="w-px h-5 bg-slate-100" />
                           <div className="flex flex-col items-center min-w-[28px]">

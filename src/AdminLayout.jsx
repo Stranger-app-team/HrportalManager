@@ -227,7 +227,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="w-full h-screen flex flex-col md:flex-row bg-[#F8FAFC] overflow-hidden">
+    <div className="w-full h-[100dvh] flex flex-col md:flex-row bg-[#F8FAFC] overflow-hidden">
       
       {/* ========== MOBILE HEADER ========== */}
       <div className="md:hidden flex items-center justify-between px-4 py-3 bg-[#061633] border-b border-white/5 z-[60]">
@@ -256,7 +256,7 @@ useEffect(() => {
         className={`
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
           ${isCollapsed ? "md:w-[80px]" : "md:w-[260px]"} 
-          fixed md:relative top-0 left-0 w-[260px] md:w-auto h-screen bg-[#061633] flex flex-col transition-all duration-300 overflow-hidden z-[55] border-r border-white/5
+          fixed md:relative top-0 left-0 w-[260px] md:w-auto h-[100dvh] bg-[#061633] flex flex-col transition-all duration-300 overflow-hidden z-[55] border-r border-white/5
         `}
       >
         {/* LOGO SECTION */}

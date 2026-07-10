@@ -196,6 +196,7 @@ export default function Profile() {
                 <DataBox label="Work Location" value={employee.workLocation || "Office"} />
                 <DataBox label="Employee ID" value={employee.employeeId} />
                 <DataBox label="Current Status" value={employee.status} />
+                <DataBox label="Shift Timing" value={`${employee.shiftStartTime || "09:00"} - ${employee.shiftEndTime || "18:00"}`} />
              </div>
           </div>
 
@@ -270,6 +271,26 @@ export default function Profile() {
                 <DataBox label="A/C Number" value={employee.bankDetails?.accountNumber} />
                 <DataBox label="Bank Name" value={employee.bankDetails?.bankName} />
                 <DataBox label="IFSC Code" value={employee.bankDetails?.ifsc} />
+                <div className="flex flex-col gap-3 justify-center md:col-span-4 mt-2">
+                   <label className="flex items-center gap-2">
+                      <input 
+                         type="checkbox" 
+                         checked={employee.eligibleForAttendanceBonus !== false}
+                         readOnly
+                         className="w-4 h-4 accent-blue-600 rounded border-slate-300 shadow-sm opacity-80 cursor-not-allowed"
+                      />
+                      <span className="text-[11px] font-bold text-slate-600">Eligible For Attendance Bonus</span>
+                   </label>
+                   <label className="flex items-center gap-2">
+                      <input 
+                         type="checkbox" 
+                         checked={employee.eligibleForPaidLeaveBonus !== false}
+                         readOnly
+                         className="w-4 h-4 accent-blue-600 rounded border-slate-300 shadow-sm opacity-80 cursor-not-allowed"
+                      />
+                      <span className="text-[11px] font-bold text-slate-600">Eligible For Paid Leave Bonus</span>
+                   </label>
+                </div>
              </div>
 
              {/* Salary History List */}

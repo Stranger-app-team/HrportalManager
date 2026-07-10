@@ -64,9 +64,12 @@ export default function EditEmployee() {
     salaryRemark: '',
     salaryDate: new Date().toISOString().split('T')[0],
     accountNumber: '',
+    accountNumber: '',
     bankName: '',
     ifscCode: '',
-    attendanceRequired: true
+    attendanceRequired: true,
+    shiftStartTime: '09:00',
+    shiftEndTime: '18:00'
   });
 
   const [initialSalary, setInitialSalary] = useState('');
@@ -136,7 +139,11 @@ export default function EditEmployee() {
             accountNumber: emp.bankDetails?.accountNumber || "",
             bankName: emp.bankDetails?.bankName || "",
             ifscCode: emp.bankDetails?.ifsc || "",
-            attendanceRequired: emp.attendanceRequired !== false
+            attendanceRequired: emp.attendanceRequired !== false,
+            shiftStartTime: emp.shiftStartTime || "09:00",
+            shiftEndTime: emp.shiftEndTime || "18:00",
+            eligibleForAttendanceBonus: emp.eligibleForAttendanceBonus !== false,
+            eligibleForPaidLeaveBonus: emp.eligibleForPaidLeaveBonus !== false
           };
           setFormData(mappedData);
           
@@ -253,6 +260,10 @@ export default function EditEmployee() {
       if (formData.reportingManager && formData.reportingManager.length > 0) {
         fData.append("managers", JSON.stringify(formData.reportingManager));
       }
+      fData.append("shiftStartTime", formData.shiftStartTime);
+      fData.append("shiftEndTime", formData.shiftEndTime);
+      fData.append("eligibleForAttendanceBonus", formData.eligibleForAttendanceBonus);
+      fData.append("eligibleForPaidLeaveBonus", formData.eligibleForPaidLeaveBonus);
 
       // ── Enum field: only send when a real value is selected ──
       if (formData.gender) fData.append("gender", formData.gender);
@@ -492,6 +503,13 @@ export default function EditEmployee() {
                    </select>
                 </F>
                 <F label="Joining Date"><input type="date" name="dateOfJoining" value={formData.dateOfJoining} onChange={handleInputChange} className={inputCls} /></F>
+                <div className="flex flex-col gap-1.5 md:col-span-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Shift Timing (Start - End)</label>
+                  <div className="flex gap-2">
+                    <input type="time" name="shiftStartTime" value={formData.shiftStartTime} onChange={handleInputChange} className={inputCls} />
+                    <input type="time" name="shiftEndTime" value={formData.shiftEndTime} onChange={handleInputChange} className={inputCls} />
+                  </div>
+                </div>
                 {/* <F label="Employee ID" required><input name="employeeId" value={formData.employeeId} onChange={handleInputChange} className={inputCls} placeholder="EMP-XXXX" /></F> */}
              </div>
           </div>
@@ -605,6 +623,26 @@ export default function EditEmployee() {
                 <F label="A/C Number"><input name="accountNumber" value={formData.accountNumber} onChange={handleInputChange} className={inputCls} /></F>
                 <F label="Bank Name"><input name="bankName" value={formData.bankName} onChange={handleInputChange} className={inputCls} placeholder="e.g. HDFC Bank" /></F>
                 <F label="IFSC Code"><input name="ifscCode" value={formData.ifscCode} onChange={handleInputChange} className={inputCls} /></F>
+                <div className="flex flex-col gap-3 justify-center md:col-span-3">
+                   <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                         type="checkbox" 
+                         checked={formData.eligibleForAttendanceBonus}
+                         onChange={(e) => setFormData(prev => ({...prev, eligibleForAttendanceBonus: e.target.checked}))}
+                         className="w-4 h-4 cursor-pointer accent-blue-600 rounded border-slate-300 shadow-sm"
+                      />
+                      <span className="text-[11px] font-bold text-slate-600">Eligible for Attendance Bonus</span>
+                   </label>
+                   <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                         type="checkbox" 
+                         checked={formData.eligibleForPaidLeaveBonus}
+                         onChange={(e) => setFormData(prev => ({...prev, eligibleForPaidLeaveBonus: e.target.checked}))}
+                         className="w-4 h-4 cursor-pointer accent-blue-600 rounded border-slate-300 shadow-sm"
+                      />
+                      <span className="text-[11px] font-bold text-slate-600">Eligible for Paid Leave Bonus</span>
+                   </label>
+                </div>
                  {String(formData.basicSalary) !== String(initialSalary) && (
                     <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
                       <F label="Salary Change Date" required>
