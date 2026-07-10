@@ -64,7 +64,6 @@ export default function EditEmployee() {
     salaryRemark: '',
     salaryDate: new Date().toISOString().split('T')[0],
     accountNumber: '',
-    accountNumber: '',
     bankName: '',
     ifscCode: '',
     attendanceRequired: true,
