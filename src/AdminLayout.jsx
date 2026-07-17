@@ -315,6 +315,7 @@ useEffect(() => {
               hidden: pendingRequests === 0,
               badge: true 
             },
+            { to: "/dashboard/assets", icon: FiMonitor, label: "Asset Requests" },
             { to: "/dashboard/wfh-requests", icon: FiHome, label: "WFH Requests" },
             { to: "/dashboard/offer-letters", icon: FiFileText, label: "Offer Letters", badge: true },
           ].filter(item => !item.hidden).map((item, idx) => {
