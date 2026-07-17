@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../config/api";
-import { FiCheckCircle, FiXCircle, FiClock, FiLoader, FiShield, FiAlertTriangle } from "react-icons/fi";
+import { FiCheckCircle, FiXCircle, FiClock, FiLoader, FiShield, FiAlertTriangle, FiBox, FiMessageSquare } from "react-icons/fi";
 import { useSocket } from "../context/SocketContext";
 
 export default function Assets() {
@@ -110,155 +110,143 @@ export default function Assets() {
 
   return (
     <div className="w-full h-full p-4 sm:p-6 bg-slate-50 overflow-y-auto">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-3">
-          <FiShield className="text-blue-600" size={28} />
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Team Asset Approvals</h1>
-            <p className="text-sm text-slate-500">Review equipment requests from your direct reports.</p>
+      <div className="w-full">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center shrink-0">
+              <FiShield className="text-blue-600" size={16} />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-slate-800 tracking-tight leading-tight">Team Approvals</h1>
+              <p className="text-[11px] text-slate-500 font-medium">Review equipment requests from your direct reports.</p>
+            </div>
           </div>
+          
+          <button 
+            onClick={() => {
+              const allHistory = requests.flatMap(r => 
+                (r.history || []).map(h => ({
+                  ...h, 
+                  requestContext: `${r.requesterId?.firstName || ''} ${r.requesterId?.lastName || ''} - ${r.requestType}`
+                }))
+              ).sort((a, b) => new Date(b.date) - new Date(a.date));
+              setSelectedHistory(allHistory);
+              setShowHistoryModal(true);
+            }}
+            className="flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-md text-[11px] font-semibold text-slate-600 transition-colors shadow-sm"
+          >
+            <FiClock size={12} className="text-slate-400" />
+            View History
+          </button>
         </div>
-        <button 
-          onClick={() => {
-            const allHistory = requests.flatMap(r => 
-              (r.history || []).map(h => ({
-                ...h, 
-                requestContext: `${r.requesterId?.firstName || ''} ${r.requesterId?.lastName || ''} - ${r.requestType}`
-              }))
-            ).sort((a, b) => new Date(b.date) - new Date(a.date));
-            setSelectedHistory(allHistory);
-            setShowHistoryModal(true);
-          }}
-          className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm"
-        >
-          <FiClock size={16} />
-          View All History
-        </button>
-      </div>
 
-      {requests.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-16 bg-white rounded-2xl border border-slate-200 shadow-sm mt-8">
-          <FiCheckCircle size={64} className="text-emerald-400 mb-6" />
-          <h2 className="text-xl font-semibold text-slate-700">All caught up!</h2>
-          <p className="mt-2 text-slate-500 text-center">There are no pending asset requests for your team.</p>
-        </div>
-      ) : (
-        <div className="space-y-6 max-w-5xl">
-          {requests.map(request => (
-            <div key={request._id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
-              
-              {/* Header */}
-              <div className="bg-slate-50/50 p-5 border-b border-slate-100 flex justify-between items-start">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-lg">
+        {requests.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-slate-200 shadow-sm">
+            <FiCheckCircle size={32} className="text-emerald-400 mb-3" />
+            <h2 className="text-base font-bold text-slate-700">All caught up!</h2>
+            <p className="text-[11px] text-slate-500 mt-0.5">There are no pending asset requests for your team.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {requests.map(request => (
+              <div key={request._id} className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col">
+                
+                {/* Header: User Info */}
+                <div className="px-3 py-2.5 border-b border-slate-100 flex items-center gap-2.5 bg-slate-50/50">
+                  <div className="w-8 h-8 bg-blue-50 text-blue-700 rounded-full flex items-center justify-center font-bold text-xs border border-blue-100 shrink-0">
                     {request.requesterId?.firstName?.[0]}{request.requesterId?.lastName?.[0]}
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-800 text-lg">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-slate-800 text-[13px] truncate">
                       {request.requesterId?.firstName} {request.requesterId?.lastName}
                     </h3>
-                    <div className="flex items-center space-x-3 mt-1 text-xs">
-                      <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-medium">Type: {request.requestType}</span>
-                      <span className="text-slate-500 flex items-center"><FiClock className="mr-1"/> {new Date(request.createdAt).toLocaleDateString()}</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">{request.requestType}</span>
+                      <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                      <span className="text-[9px] font-medium text-slate-400">{new Date(request.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <span className={`px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold uppercase tracking-wider`}>
-                      {request.status.replace(/_/g, ' ')}
-                    </span>
-                  </div>
                 </div>
-              </div>
 
-              {/* Justification */}
-              {request.reason && (
-                <div className="px-5 py-4 border-b border-slate-100 bg-amber-50/30">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1 flex items-center">
-                    <FiAlertTriangle className="mr-1.5" /> Justification
-                  </p>
-                  <p className="text-sm text-slate-700 italic">"{request.reason}"</p>
-                </div>
-              )}
-
-              {/* Items Table */}
-              <div className="p-5">
-                <table className="w-full text-left text-sm">
-                  <thead className="text-slate-500 font-semibold border-b border-slate-100">
-                    <tr>
-                      <th className="pb-3 px-2">Requested Item</th>
-                      <th className="pb-3 px-2">Status</th>
-                      <th className="pb-3 px-2 text-right">Approval Decision</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {request.items.map(item => (
-                      <tr key={item._id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="py-3 px-2 font-medium text-slate-800">
-                           <div className="flex flex-col gap-1 items-start">
-                             <span>{item.assetId?.assetName || (item.bundleId ? `Legacy Bundle Request` : 'Unknown Asset')}</span>
-                             {item.bundleId && item.assetId && (
-                               <span className="bg-purple-50 text-purple-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
-                                 BUNDLE: {item.bundleId.bundleName}
-                               </span>
-                             )}
-                           </div>
-                        </td>
-                        <td className="py-3 px-2">
-                           {item.status === 'PENDING_MANAGER' ? (
-                             <span className="text-orange-600 font-medium">Awaiting Your Review</span>
-                           ) : (
-                             <span className="text-slate-500 font-medium">{item.status}</span>
-                           )}
-                        </td>
-                        <td className="py-3 px-2 text-right">
-                          {item.status === 'PENDING_MANAGER' && (
-                            <div className="flex justify-end space-x-2">
-                              <button 
-                                onClick={() => {
-                                  setRejectingItem({ requestId: request._id, itemId: item._id });
-                                  setShowRejectModal(true);
-                                }}
-                                className="flex items-center px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
-                              >
-                                <FiXCircle className="mr-1.5" size={14} /> Reject
-                              </button>
-                              <button 
-                                onClick={() => handleApprove(request._id, item._id)}
-                                className="flex items-center px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-100"
-                              >
-                                <FiCheckCircle className="mr-1.5" size={14} /> Approve
-                              </button>
-                            </div>
+                {/* Body: Items and Reason */}
+                <div className="p-2.5 flex-1 flex flex-col gap-2">
+                  {request.items.map(item => (
+                    <div key={item._id} className="bg-slate-50 rounded p-2 border border-slate-100 flex flex-col gap-1.5">
+                      <div className="flex items-start gap-1.5">
+                        <FiBox className="text-slate-400 mt-0.5 shrink-0" size={12} />
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[12px] font-bold text-slate-700 leading-tight truncate">
+                            {item.assetId?.assetName || (item.bundleId ? `Legacy Bundle Request` : 'Unknown Asset')}
+                          </span>
+                          {item.bundleId && item.assetId && (
+                            <span className="text-[9px] font-bold text-purple-600 mt-0.5 uppercase tracking-wide truncate">Bundle: {item.bundleId.bundleName}</span>
                           )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </div>
+                      </div>
+                      
+                      {item.status === 'PENDING_MANAGER' ? (
+                        <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/60 mt-0.5">
+                          <span className="text-[9px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded uppercase tracking-wide flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
+                            Needs Review
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <button 
+                              onClick={() => { setRejectingItem({ requestId: request._id, itemId: item._id }); setShowRejectModal(true); }}
+                              className="px-2 py-1 text-[10px] font-bold text-red-600 bg-white border border-red-200 hover:bg-red-50 rounded transition-colors flex items-center gap-1"
+                            >
+                              <FiXCircle size={10} /> Reject
+                            </button>
+                            <button 
+                              onClick={() => handleApprove(request._id, item._id)}
+                              className="px-2 py-1 text-[10px] font-bold text-white bg-blue-600 border border-blue-600 hover:bg-blue-700 rounded transition-colors flex items-center gap-1 shadow-sm"
+                            >
+                              <FiCheckCircle size={10} /> Approve
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="pt-1.5 border-t border-slate-200/60 mt-0.5">
+                          <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide bg-slate-100 px-1.5 py-0.5 rounded">
+                            {item.status.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {request.reason && (
+                    <div className="flex items-start gap-1.5 text-[10px] text-slate-500 px-1 pt-0.5">
+                      <FiMessageSquare className="text-slate-400 shrink-0 mt-[1px]" size={10} />
+                      <span className="italic leading-snug line-clamp-2">"{request.reason}"</span>
+                    </div>
+                  )}
+                </div>
+
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Reject Modal */}
       {showRejectModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="p-5 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-800">Reason for Rejection</h3>
-              <p className="text-sm text-slate-500 mt-1">Please provide a reason to the employee.</p>
+          <div className="bg-white rounded-lg w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-3 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="text-sm font-bold text-slate-800">Reason for Rejection</h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">Please provide a reason to the employee.</p>
             </div>
-            <form onSubmit={submitRejection} className="p-5">
+            <form onSubmit={submitRejection} className="p-3">
               <textarea
                 required
                 rows="3"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none focus:bg-white focus:border-red-500 transition-colors resize-none"
-                placeholder="e.g., We are not upgrading equipment this quarter."
+                className="w-full bg-white border border-slate-200 rounded p-2 text-xs outline-none focus:border-red-500 transition-colors resize-none shadow-sm"
+                placeholder="e.g., Equipment freeze this quarter."
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
               />
-              <div className="flex justify-end space-x-3 mt-6">
+              <div className="flex justify-end gap-2 mt-3">
                 <button
                   type="button"
                   onClick={() => {
@@ -266,68 +254,75 @@ export default function Assets() {
                     setRejectingItem(null);
                     setRejectionReason("");
                   }}
-                  className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                  className="px-2.5 py-1 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!rejectionReason.trim()}
-                  className="px-4 py-2 flex items-center text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50"
+                  className="px-2.5 py-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded transition-colors disabled:opacity-50"
                 >
-                  Confirm Rejection
+                  Reject
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
       {/* History Modal */}
       {showHistoryModal && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white rounded-lg w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <div>
-                <h3 className="font-bold text-slate-800 text-lg">Request History</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Timeline of actions for this request</p>
+                <h3 className="text-sm font-bold text-slate-800">Request History</h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">Timeline of actions</p>
               </div>
               <button 
                 onClick={() => setShowHistoryModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 text-slate-500 transition-colors"
+                className="w-6 h-6 flex items-center justify-center rounded text-slate-500 hover:bg-slate-200 transition-colors"
               >
                 &times;
               </button>
             </div>
             
-            <div className="p-6 max-h-[60vh] overflow-y-auto">
+            <div className="p-3 max-h-[50vh] overflow-y-auto">
               {selectedHistory.length === 0 ? (
-                <div className="text-center py-8">
-                  <FiClock className="mx-auto text-slate-300 mb-3" size={32} />
-                  <p className="text-sm text-slate-500">No history events found for this request.</p>
+                <div className="text-center py-6">
+                  <FiClock className="text-slate-300 mx-auto mb-2" size={16} />
+                  <p className="text-[11px] font-medium text-slate-500">No history events found.</p>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-3">
                   {selectedHistory.map((item, index) => (
-                    <div key={index} className="flex gap-4 relative">
+                    <div key={index} className="flex gap-3 relative">
                       {index !== selectedHistory.length - 1 && (
-                        <div className="absolute left-4 top-10 bottom-[-24px] w-0.5 bg-slate-100"></div>
+                        <div className="absolute left-[11px] top-6 bottom-[-12px] w-[1px] bg-slate-100"></div>
                       )}
                       
-                      <div className="w-8 h-8 rounded-full bg-blue-50 border-2 border-white flex items-center justify-center flex-shrink-0 z-10 text-blue-600">
-                        <FiCheckCircle size={14} />
+                      <div className="w-6 h-6 rounded-full bg-blue-50 border-2 border-white flex items-center justify-center flex-shrink-0 z-10 text-blue-600">
+                        <FiCheckCircle size={10} />
                       </div>
                       
-                      <div className="flex-1 pb-2">
+                      <div className="flex-1 pb-1 pt-0.5">
                         <div className="flex justify-between items-start">
-                          <h4 className="font-semibold text-slate-800 text-sm">{item.action}</h4>
-                          <span className="text-xs font-medium text-slate-400">{new Date(item.date).toLocaleDateString()} {new Date(item.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                          <h4 className="font-bold text-slate-800 text-[11px]">{item.action}</h4>
+                          <span className="text-[9px] font-semibold text-slate-400">{new Date(item.date).toLocaleDateString()}</span>
                         </div>
-                        {item.requestContext && <p className="text-xs font-bold text-slate-500 mt-0.5">{item.requestContext}</p>}
-                        <p className="text-xs font-medium text-blue-600 mt-1 mb-1.5 inline-block px-2 py-0.5 bg-blue-50 rounded">Status: {item.status}</p>
-                        <p className="text-sm text-slate-600">{item.comment}</p>
-                        <p className="text-xs text-slate-400 mt-2 flex items-center gap-1">
-                          By <span className="font-medium text-slate-500 capitalize">{item.updatedByRole}</span>
-                        </p>
+                        {item.requestContext && <p className="text-[9px] font-medium text-slate-500 mt-0.5">{item.requestContext}</p>}
+                        
+                        <div className="mt-1 bg-slate-50 rounded p-1.5 border border-slate-100">
+                          <p className="text-[10px] text-slate-600">{item.comment}</p>
+                          <div className="flex items-center gap-1.5 mt-1 pt-1 border-t border-slate-200">
+                            <span className="text-[8px] font-bold text-slate-400 uppercase">Status: {item.status}</span>
+                            <span className="w-0.5 h-0.5 rounded-full bg-slate-200"></span>
+                            <span className="text-[8px] font-bold text-slate-400 uppercase">
+                              By {item.updatedByRole}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -335,10 +330,10 @@ export default function Assets() {
               )}
             </div>
             
-            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <div className="p-2.5 bg-slate-50 border-t border-slate-100 flex justify-end">
               <button 
                 onClick={() => setShowHistoryModal(false)}
-                className="px-4 py-2 font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
+                className="px-3 py-1 text-[11px] font-bold text-slate-600 bg-white border border-slate-200 rounded hover:bg-slate-50 transition-all shadow-sm"
               >
                 Close
               </button>
