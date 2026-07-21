@@ -111,7 +111,7 @@ export default function Assets() {
   return (
     <div className="w-full h-full p-4 sm:p-6 bg-slate-50 overflow-y-auto">
       <div className="w-full">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center shrink-0">
               <FiShield className="text-blue-600" size={16} />
