@@ -366,9 +366,9 @@ useEffect(() => {
                     )}
                   </div>
                  {(!isCollapsed || isMobileMenuOpen) && (
-                   <div className="min-w-0">
-                      <p className="text-[11px] font-[800] text-white truncate uppercase">{user?.name}</p>
-                      <p className="text-[8px] text-slate-400 font-bold tracking-widest uppercase">{user?.userType || "Administrator"}</p>
+                   <div className="flex-1 min-w-0 max-w-[150px]">
+                      <p className="text-[11px] font-[800] text-white truncate uppercase block w-full" title={user?.name}>{user?.name}</p>
+                      <p className="text-[8px] text-slate-400 font-bold tracking-widest uppercase truncate block w-full" title={user?.userType || "Administrator"}>{user?.userType || "Administrator"}</p>
                    </div>
                  )}
               </div>
@@ -403,9 +403,9 @@ useEffect(() => {
                      onClick={() => setSelectedCard(selectedCard === "avatar" ? null : "avatar")}
                      className="flex items-center gap-3 group transition-all"
                    >
-                      <div className="text-right hidden sm:block">
-                         <p className="text-[12.5px] font-black text-slate-700 leading-tight group-hover:text-blue-600 transition-colors uppercase">{user?.name}</p>
-                         <p className="text-[9.5px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{user?.userType || "Administrator"}</p>
+                      <div className="text-right hidden sm:block min-w-0 max-w-[200px]">
+                         <p className="text-[12.5px] font-black text-slate-700 leading-tight group-hover:text-blue-600 transition-colors uppercase truncate block w-full" title={user?.name}>{user?.name}</p>
+                         <p className="text-[9.5px] text-slate-400 font-bold uppercase tracking-widest mt-0.5 truncate block w-full" title={user?.userType || "Administrator"}>{user?.userType || "Administrator"}</p>
                       </div>
                       <div className="w-10 h-10 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-[14px] shadow-sm overflow-hidden border border-slate-100 ring-2 ring-white group-hover:ring-blue-100 transition-all">
                          {user?.profilePhoto ? (

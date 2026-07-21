@@ -175,8 +175,9 @@ export default function Assets() {
                       <div className="flex items-start gap-1.5">
                         <FiBox className="text-slate-400 mt-0.5 shrink-0" size={12} />
                         <div className="flex flex-col min-w-0">
-                          <span className="text-[12px] font-bold text-slate-700 leading-tight truncate">
+                          <span className="text-[12px] font-bold text-slate-700 leading-tight truncate flex items-center gap-1.5 flex-wrap">
                             {item.assetId?.assetName || (item.bundleId ? `Legacy Bundle Request` : 'Unknown Asset')}
+                            {item.assetId?.condition && !item.bundleId && <span className="px-1 py-0.5 rounded bg-blue-50/80 border border-blue-100 text-blue-600 text-[8px] font-bold uppercase tracking-wider">{item.assetId.condition}</span>}
                           </span>
                           {item.bundleId && item.assetId && (
                             <span className="text-[9px] font-bold text-purple-600 mt-0.5 uppercase tracking-wide truncate">Bundle: {item.bundleId.bundleName}</span>
