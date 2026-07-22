@@ -123,20 +123,33 @@ export default function Assets() {
           </div>
           
           <button 
-            onClick={() => {
-              const allHistory = requests.flatMap(r => 
-                (r.history || []).map(h => ({
-                  ...h, 
-                  requestContext: `${r.requesterId?.firstName || ''} ${r.requesterId?.lastName || ''} - ${r.requestType}`
-                }))
-              ).sort((a, b) => new Date(b.date) - new Date(a.date));
-              setSelectedHistory(allHistory);
-              setShowHistoryModal(true);
+            title="View History"
+            onClick={async () => {
+              try {
+                const token = localStorage.getItem("token");
+                const resReqs = await fetch(`${API_BASE_URL}/asset-requests?status=all&role=manager`, {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                if (resReqs.ok) {
+                  const dataReqs = await resReqs.json();
+                  if (Array.isArray(dataReqs)) {
+                    const allHistory = dataReqs.flatMap(r => 
+                      (r.history || []).map(h => ({
+                        ...h, 
+                        requestContext: `${r.requesterId?.name || (r.requesterId?.firstName ? `${r.requesterId.firstName} ${r.requesterId.lastName || ''}` : '')} - ${r.requestType}`
+                      }))
+                    ).sort((a, b) => new Date(b.date) - new Date(a.date));
+                    setSelectedHistory(allHistory);
+                    setShowHistoryModal(true);
+                  }
+                }
+              } catch (e) {
+                console.error(e);
+              }
             }}
-            className="flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-md text-[11px] font-semibold text-slate-600 transition-colors shadow-sm"
+            className="flex items-center justify-center bg-white hover:bg-slate-50 border border-slate-200 p-1.5 rounded-md text-slate-600 transition-colors shadow-sm"
           >
-            <FiClock size={12} className="text-slate-400" />
-            View History
+            <FiClock size={16} className="text-slate-500" />
           </button>
         </div>
 
@@ -153,12 +166,12 @@ export default function Assets() {
                 
                 {/* Header: User Info */}
                 <div className="px-3 py-2.5 border-b border-slate-100 flex items-center gap-2.5 bg-slate-50/50">
-                  <div className="w-8 h-8 bg-blue-50 text-blue-700 rounded-full flex items-center justify-center font-bold text-xs border border-blue-100 shrink-0">
-                    {request.requesterId?.firstName?.[0]}{request.requesterId?.lastName?.[0]}
+                  <div className="w-8 h-8 bg-blue-50 text-blue-700 rounded-full flex items-center justify-center font-bold text-xs border border-blue-100 shrink-0 uppercase">
+                    {request.requesterId?.name?.[0] || request.requesterId?.firstName?.[0] || '?'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-slate-800 text-[13px] truncate">
-                      {request.requesterId?.firstName} {request.requesterId?.lastName}
+                      {request.requesterId?.name || (request.requesterId?.firstName ? `${request.requesterId.firstName} ${request.requesterId.lastName || ''}` : 'Unknown')}
                     </h3>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">{request.requestType}</span>
